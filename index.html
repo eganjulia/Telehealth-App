@@ -260,6 +260,60 @@
       border-top: 1px dashed #e2e8f0;
       margin: 26px 0;
     }
+
+    /* ── Standalone text input ── */
+    .text-input {
+      width: 100%;
+      border: 2px solid #e2e8f0;
+      border-radius: 8px;
+      padding: 10px 13px;
+      font-size: 0.92rem;
+      color: #2d3748;
+      outline: none;
+      transition: border-color 0.15s;
+      font-family: inherit;
+    }
+    .text-input:focus { border-color: #3b82f6; }
+
+    /* ── Select dropdown ── */
+    .select-input {
+      width: 100%;
+      border: 2px solid #e2e8f0;
+      border-radius: 8px;
+      padding: 10px 36px 10px 13px;
+      font-size: 0.92rem;
+      color: #2d3748;
+      outline: none;
+      transition: border-color 0.15s;
+      font-family: inherit;
+      background: #fff url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%23718096' stroke-width='2'%3E%3Cpolyline points='6 9 12 15 18 9'/%3E%3C/svg%3E") no-repeat right 12px center;
+      appearance: none;
+      cursor: pointer;
+    }
+    .select-input:focus { border-color: #3b82f6; }
+    .select-input option[value=""] { color: #a0aec0; }
+
+    /* ── Sub-steps (one question at a time within a section) ── */
+    .sub-step { display: none; }
+    .sub-step.active { display: block; }
+
+    /* ── Warning banner (credentialing / clearance flags) ── */
+    .warn-banner {
+      display: none;
+      align-items: flex-start;
+      gap: 10px;
+      background: #fffbeb;
+      border: 1px solid #fcd34d;
+      border-radius: 8px;
+      padding: 12px 14px;
+      margin-top: 14px;
+      font-size: 0.875rem;
+      color: #92400e;
+      line-height: 1.5;
+    }
+    .warn-banner.visible { display: flex; }
+    .warn-banner svg { flex-shrink: 0; margin-top: 2px; }
+    .warn-banner strong { display: block; font-weight: 700; margin-bottom: 2px; }
   </style>
 </head>
 <body>
@@ -464,22 +518,176 @@
     </div>
   </div>
 
+  <!-- ════════════════════════════════════════════
+       SECTION 5 — Program Details (one question at a time)
+  ════════════════════════════════════════════ -->
+  <div class="section" id="section-5">
+
+    <!-- 5-1: Program name -->
+    <div class="sub-step active" id="ss-5-1">
+      <div class="section-label">Section 5 — Program Details &nbsp;·&nbsp; 1 of 5</div>
+      <div class="question-block">
+        <div class="question-text">
+          What is the name of your program?<span class="required-asterisk">*</span>
+        </div>
+        <input type="text" class="text-input" id="programName"
+               placeholder="Enter program name" autocomplete="off" />
+        <div class="field-error" id="programName-error">Please enter your program name.</div>
+      </div>
+      <div class="nav">
+        <button class="btn btn-ghost" onclick="goToSection(4)">← Back</button>
+        <button class="btn btn-primary" onclick="goToSubStep(5, 2)">Next</button>
+      </div>
+    </div>
+
+    <!-- 5-2: Program number -->
+    <div class="sub-step" id="ss-5-2">
+      <div class="section-label">Section 5 — Program Details &nbsp;·&nbsp; 2 of 5</div>
+      <div class="question-block">
+        <div class="question-text">
+          What is your program number?<span class="required-asterisk">*</span>
+        </div>
+        <input type="text" class="text-input" id="programNumber"
+               placeholder="Enter program number" autocomplete="off" />
+        <div class="field-error" id="programNumber-error">Please enter your program number.</div>
+      </div>
+      <div class="nav">
+        <button class="btn btn-ghost" onclick="goToSubStep(5, 1)">← Back</button>
+        <button class="btn btn-primary" onclick="goToSubStep(5, 3)">Next</button>
+      </div>
+    </div>
+
+    <!-- 5-3: State -->
+    <div class="sub-step" id="ss-5-3">
+      <div class="section-label">Section 5 — Program Details &nbsp;·&nbsp; 3 of 5</div>
+      <div class="question-block">
+        <div class="question-text">
+          What state is your program located in?<span class="required-asterisk">*</span>
+        </div>
+        <select class="select-input" id="programState">
+          <option value="">— Select a state —</option>
+          <option value="California">California</option>
+          <option value="Oregon">Oregon</option>
+          <option value="Washington">Washington</option>
+          <option value="Arizona">Arizona</option>
+          <option value="Nebraska">Nebraska</option>
+        </select>
+        <div class="field-error" id="programState-error">Please select a state.</div>
+      </div>
+      <div class="nav">
+        <button class="btn btn-ghost" onclick="goToSubStep(5, 2)">← Back</button>
+        <button class="btn btn-primary" onclick="goToSubStep(5, 4)">Next</button>
+      </div>
+    </div>
+
+    <!-- 5-4: County -->
+    <div class="sub-step" id="ss-5-4">
+      <div class="section-label">Section 5 — Program Details &nbsp;·&nbsp; 4 of 5</div>
+      <div class="question-block">
+        <div class="question-text">
+          What is your program's county?<span class="required-asterisk">*</span>
+        </div>
+        <input type="text" class="text-input" id="programCounty"
+               placeholder="Enter county name" autocomplete="off" />
+        <div class="field-error" id="programCounty-error">Please enter your county.</div>
+
+        <!-- Credentialing flag — shown for specific counties -->
+        <div class="warn-banner" id="credentialing-banner">
+          <svg width="18" height="18" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+            <path stroke-linecap="round" stroke-linejoin="round"
+              d="M12 9v2m0 4h.01M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/>
+          </svg>
+          <span><strong>Credentialing required</strong>
+            This county requires provider credentialing before services can begin. The telehealth coordinator will follow up with credentialing details.</span>
+        </div>
+      </div>
+      <div class="nav">
+        <button class="btn btn-ghost" onclick="goToSubStep(5, 3)">← Back</button>
+        <button class="btn btn-primary" onclick="goToSubStep(5, 5)">Next</button>
+      </div>
+    </div>
+
+    <!-- 5-5: Program type -->
+    <div class="sub-step" id="ss-5-5">
+      <div class="section-label">Section 5 — Program Details &nbsp;·&nbsp; 5 of 5</div>
+      <div class="question-block">
+        <div class="question-text">
+          What type of program is this?<span class="required-asterisk">*</span>
+        </div>
+        <select class="select-input" id="programType">
+          <option value="">— Select a program type —</option>
+          <option value="Crisis residential program">Crisis residential program</option>
+          <option value="Enhanced behavioral support program">Enhanced behavioral support program</option>
+          <option value="Psychiatric health facility">Psychiatric health facility</option>
+          <option value="Mental health rehabilitation center">Mental health rehabilitation center</option>
+          <option value="Evaluation and treatment center">Evaluation and treatment center</option>
+          <option value="Subacute">Subacute</option>
+          <option value="Skilled nursing">Skilled nursing</option>
+          <option value="Community">Community</option>
+          <option value="Crisis">Crisis</option>
+        </select>
+        <div class="field-error" id="programType-error">Please select a program type.</div>
+
+        <!-- Clearance flag — shown for specific program types -->
+        <div class="warn-banner" id="clearance-banner">
+          <svg width="18" height="18" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+            <path stroke-linecap="round" stroke-linejoin="round"
+              d="M12 9v2m0 4h.01M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/>
+          </svg>
+          <span id="clearance-banner-text"></span>
+        </div>
+      </div>
+      <div class="nav">
+        <button class="btn btn-ghost" onclick="goToSubStep(5, 4)">← Back</button>
+        <button class="btn btn-primary" onclick="goToSection(6)">Next</button>
+      </div>
+    </div>
+
+  </div><!-- /#section-5 -->
+
 </div><!-- /.card -->
 
 <script>
   // ─── State ───────────────────────────────────────────────
   const formData = {
-    serviceType:    null,   // Q1
-    serviceModel:   null,   // Q2 (clinician only)
-    reasons:        [],     // Q3
-    vacantRoles:    '',     // Q3 sub-field
-    startDate:      '',     // Q4
-    priority:       null,   // Q5
-    telehealthExp:  null,   // Q6
+    serviceType:          null,   // Q1
+    serviceModel:         null,   // Q2 (clinician only)
+    reasons:              [],     // Q3
+    vacantRoles:          '',     // Q3 sub-field
+    startDate:            '',     // Q4
+    priority:             null,   // Q5
+    telehealthExp:        null,   // Q6
+    // Section 5
+    programName:          '',
+    programNumber:        '',
+    programState:         '',
+    programCounty:        '',
+    credentialingRequired: false, // backend flag
+    programType:          '',
+    clearanceRequired:    null,   // 'CCL' | 'DHCS' | null
   };
 
-  const TOTAL_SECTIONS = 4;   // will grow as more sections are added
+  const TOTAL_SECTIONS = 5;
   let currentSection = 1;
+
+  // Track active sub-step per section (for sections with per-question navigation)
+  const sectionSubSteps = { 5: 1 };
+
+  // ── Backend flag constants ───────────────────────────────
+  const CREDENTIALING_COUNTIES = new Set([
+    'alameda', 'kern', 'santa clara', 'san diego',
+    'sonoma', 'riverside', 'ventura', 'orange'
+  ]);
+
+  const CCL_TYPES = new Set([
+    'Crisis residential program',
+    'Enhanced behavioral support program'
+  ]);
+
+  const DHCS_TYPES = new Set([
+    'Psychiatric health facility',
+    'Mental health rehabilitation center'
+  ]);
 
   // ─── Progress ────────────────────────────────────────────
   function renderProgress(sectionNum) {
@@ -499,8 +707,8 @@
 
   // ─── Section navigation ──────────────────────────────────
   function goToSection(num) {
-    // Validate current section before moving forward
     if (num > currentSection && !validateSection(currentSection)) return;
+    const goingForward = num >= currentSection;
 
     document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
     const target = document.getElementById('section-' + num);
@@ -508,8 +716,36 @@
       target.classList.add('active');
       currentSection = num;
       renderProgress(num);
+
+      // For sections with sub-steps: go to sub-step 1 when entering forward,
+      // or restore the last visited sub-step when navigating back.
+      if (sectionSubSteps.hasOwnProperty(num)) {
+        const sub = goingForward ? 1 : sectionSubSteps[num];
+        sectionSubSteps[num] = sub;
+        showSubStep(num, sub);
+      }
+
       window.scrollTo({ top: 0, behavior: 'smooth' });
     }
+  }
+
+  // Show a single sub-step within a section, hiding all others
+  function showSubStep(sectionNum, subNum) {
+    const section = document.getElementById('section-' + sectionNum);
+    if (!section) return;
+    section.querySelectorAll('.sub-step').forEach(s => s.classList.remove('active'));
+    const target = section.querySelector('#ss-' + sectionNum + '-' + subNum);
+    if (target) target.classList.add('active');
+  }
+
+  // Navigate between sub-steps within a section
+  function goToSubStep(sectionNum, subNum) {
+    const currentSub = sectionSubSteps[sectionNum] || 1;
+    // Validate before advancing
+    if (subNum > currentSub && !validateSubStep(sectionNum, currentSub)) return;
+    sectionSubSteps[sectionNum] = subNum;
+    showSubStep(sectionNum, subNum);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
   }
 
   // ─── Validation ──────────────────────────────────────────
@@ -571,6 +807,46 @@
       }
     }
 
+    if (num === 5) {
+      // Validate every sub-step in section 5
+      for (let sub = 1; sub <= 5; sub++) {
+        if (!validateSubStep(5, sub)) valid = false;
+      }
+    }
+
+    return valid;
+  }
+
+  // Per-question validation within a section's sub-steps
+  function validateSubStep(sectionNum, subNum) {
+    let valid = true;
+    if (sectionNum === 5) {
+      if (subNum === 1) {
+        const ok = formData.programName.trim() !== '';
+        showError('programName-error', !ok);
+        if (!ok) valid = false;
+      }
+      if (subNum === 2) {
+        const ok = formData.programNumber.trim() !== '';
+        showError('programNumber-error', !ok);
+        if (!ok) valid = false;
+      }
+      if (subNum === 3) {
+        const ok = !!formData.programState;
+        showError('programState-error', !ok);
+        if (!ok) valid = false;
+      }
+      if (subNum === 4) {
+        const ok = formData.programCounty.trim() !== '';
+        showError('programCounty-error', !ok);
+        if (!ok) valid = false;
+      }
+      if (subNum === 5) {
+        const ok = !!formData.programType;
+        showError('programType-error', !ok);
+        if (!ok) valid = false;
+      }
+    }
     return valid;
   }
 
@@ -667,6 +943,66 @@
     showError('q5-error', false);
     const banner = document.getElementById('onboarding-banner');
     banner.classList.toggle('visible', value === 'No');
+  });
+
+  // ─── Wire up Section 5 ───────────────────────────────────
+
+  // 5-1: Program name
+  document.getElementById('programName').addEventListener('input', e => {
+    formData.programName = e.target.value;
+    if (formData.programName.trim()) showError('programName-error', false);
+  });
+
+  // 5-2: Program number
+  document.getElementById('programNumber').addEventListener('input', e => {
+    formData.programNumber = e.target.value;
+    if (formData.programNumber.trim()) showError('programNumber-error', false);
+  });
+
+  // 5-3: State
+  document.getElementById('programState').addEventListener('change', e => {
+    formData.programState = e.target.value;
+    if (formData.programState) showError('programState-error', false);
+  });
+
+  // 5-4: County — with credentialing flag logic
+  document.getElementById('programCounty').addEventListener('input', e => {
+    formData.programCounty = e.target.value;
+    if (formData.programCounty.trim()) showError('programCounty-error', false);
+
+    const normalized = formData.programCounty.trim().toLowerCase()
+      .replace(/\s+county$/, '');           // strip trailing " county" if present
+    const flagged = CREDENTIALING_COUNTIES.has(normalized);
+    formData.credentialingRequired = flagged;
+    document.getElementById('credentialing-banner').classList.toggle('visible', flagged);
+  });
+
+  // 5-5: Program type — with CCL / DHCS clearance flag logic
+  document.getElementById('programType').addEventListener('change', e => {
+    formData.programType = e.target.value;
+    if (formData.programType) showError('programType-error', false);
+
+    const banner = document.getElementById('clearance-banner');
+    const bannerText = document.getElementById('clearance-banner-text');
+
+    if (CCL_TYPES.has(formData.programType)) {
+      formData.clearanceRequired = 'CCL';
+      bannerText.innerHTML =
+        '<strong>Community Care Licensing (CCL) clearance required</strong>' +
+        'This program type requires CCL clearance before services can begin. ' +
+        'The telehealth coordinator will follow up with clearance details.';
+      banner.classList.add('visible');
+    } else if (DHCS_TYPES.has(formData.programType)) {
+      formData.clearanceRequired = 'DHCS';
+      bannerText.innerHTML =
+        '<strong>DHCS clearance required</strong>' +
+        'This program type requires Department of Health Care Services (DHCS) clearance ' +
+        'before services can begin. The telehealth coordinator will follow up.';
+      banner.classList.add('visible');
+    } else {
+      formData.clearanceRequired = null;
+      banner.classList.remove('visible');
+    }
   });
 
   // ─── Init ─────────────────────────────────────────────────
