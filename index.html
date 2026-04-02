@@ -1,0 +1,424 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Telehealth Service Request</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      background: #f0f4f8;
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 24px;
+    }
+
+    .card {
+      background: #fff;
+      border-radius: 12px;
+      box-shadow: 0 2px 16px rgba(0,0,0,0.10);
+      max-width: 540px;
+      width: 100%;
+      padding: 36px 40px;
+    }
+
+    h1 {
+      font-size: 1.4rem;
+      color: #1a202c;
+      margin-bottom: 6px;
+    }
+
+    .subtitle {
+      font-size: 0.9rem;
+      color: #718096;
+      margin-bottom: 28px;
+    }
+
+    /* Progress bar */
+    .progress-bar {
+      height: 4px;
+      background: #e2e8f0;
+      border-radius: 4px;
+      margin-bottom: 28px;
+    }
+    .progress-fill {
+      height: 100%;
+      background: #3b82f6;
+      border-radius: 4px;
+      transition: width 0.3s ease;
+    }
+
+    /* Steps */
+    .step { display: none; }
+    .step.active { display: block; }
+
+    .step-label {
+      font-size: 0.75rem;
+      font-weight: 600;
+      color: #3b82f6;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      margin-bottom: 8px;
+    }
+
+    .question {
+      font-size: 1.05rem;
+      font-weight: 600;
+      color: #1a202c;
+      margin-bottom: 18px;
+    }
+
+    /* Option buttons */
+    .options {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    .option-btn {
+      background: #f7fafc;
+      border: 2px solid #e2e8f0;
+      border-radius: 8px;
+      padding: 12px 16px;
+      text-align: left;
+      cursor: pointer;
+      font-size: 0.95rem;
+      color: #2d3748;
+      transition: border-color 0.15s, background 0.15s;
+    }
+
+    .option-btn:hover { border-color: #3b82f6; background: #ebf4ff; }
+    .option-btn.selected { border-color: #3b82f6; background: #ebf4ff; font-weight: 600; }
+
+    /* Navigation */
+    .nav {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-top: 28px;
+    }
+
+    .btn {
+      padding: 10px 24px;
+      border-radius: 8px;
+      border: none;
+      cursor: pointer;
+      font-size: 0.95rem;
+      font-weight: 600;
+      transition: opacity 0.15s;
+    }
+    .btn:disabled { opacity: 0.4; cursor: not-allowed; }
+
+    .btn-primary { background: #3b82f6; color: #fff; }
+    .btn-primary:hover:not(:disabled) { background: #2563eb; }
+    .btn-ghost { background: transparent; color: #718096; }
+    .btn-ghost:hover { color: #2d3748; }
+
+    /* Recommendation */
+    .recommendation {
+      background: #f0fdf4;
+      border: 2px solid #86efac;
+      border-radius: 10px;
+      padding: 20px;
+      margin-bottom: 20px;
+    }
+    .recommendation.urgent {
+      background: #fff7ed;
+      border-color: #fdba74;
+    }
+    .recommendation.mental {
+      background: #faf5ff;
+      border-color: #c084fc;
+    }
+
+    .rec-label {
+      font-size: 0.75rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      margin-bottom: 6px;
+      color: #16a34a;
+    }
+    .recommendation.urgent .rec-label { color: #ea580c; }
+    .recommendation.mental .rec-label { color: #9333ea; }
+
+    .rec-title {
+      font-size: 1.1rem;
+      font-weight: 700;
+      color: #1a202c;
+      margin-bottom: 6px;
+    }
+
+    .rec-desc {
+      font-size: 0.9rem;
+      color: #4a5568;
+      line-height: 1.5;
+    }
+
+    /* Summary */
+    .summary-box {
+      background: #f7fafc;
+      border-radius: 8px;
+      padding: 16px 20px;
+      margin-bottom: 20px;
+    }
+
+    .summary-box h3 {
+      font-size: 0.85rem;
+      font-weight: 700;
+      color: #718096;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      margin-bottom: 12px;
+    }
+
+    .summary-row {
+      display: flex;
+      justify-content: space-between;
+      font-size: 0.9rem;
+      margin-bottom: 8px;
+      color: #2d3748;
+    }
+
+    .summary-row span:first-child { color: #718096; }
+    .summary-row span:last-child { font-weight: 600; }
+
+    .restart-btn {
+      width: 100%;
+      text-align: center;
+      background: #f7fafc;
+      border: 2px solid #e2e8f0;
+      border-radius: 8px;
+      padding: 11px;
+      font-size: 0.9rem;
+      color: #718096;
+      cursor: pointer;
+      font-weight: 600;
+      transition: border-color 0.15s;
+    }
+    .restart-btn:hover { border-color: #3b82f6; color: #3b82f6; }
+  </style>
+</head>
+<body>
+<div class="card">
+  <h1>Telehealth Service Request</h1>
+  <p class="subtitle">Answer a few quick questions to get a care recommendation.</p>
+
+  <div class="progress-bar">
+    <div class="progress-fill" id="progressFill" style="width: 0%"></div>
+  </div>
+
+  <!-- Step 1: Concern type -->
+  <div class="step active" id="step-1">
+    <div class="step-label">Step 1 of 4</div>
+    <div class="question">What best describes your concern?</div>
+    <div class="options">
+      <button class="option-btn" data-key="concern" data-value="physical">Physical symptoms (pain, fever, injury, etc.)</button>
+      <button class="option-btn" data-key="concern" data-value="mental">Mental health (anxiety, depression, stress)</button>
+      <button class="option-btn" data-key="concern" data-value="chronic">Managing a chronic condition</button>
+      <button class="option-btn" data-key="concern" data-value="prescription">Prescription renewal or medication question</button>
+    </div>
+    <div class="nav">
+      <span></span>
+      <button class="btn btn-primary" id="next-1" disabled onclick="goTo(2)">Next</button>
+    </div>
+  </div>
+
+  <!-- Step 2: Urgency -->
+  <div class="step" id="step-2">
+    <div class="step-label">Step 2 of 4</div>
+    <div class="question">How urgent is your situation?</div>
+    <div class="options">
+      <button class="option-btn" data-key="urgency" data-value="emergency">Severe — may need emergency care</button>
+      <button class="option-btn" data-key="urgency" data-value="soon">Noticeable — I'd like to be seen soon</button>
+      <button class="option-btn" data-key="urgency" data-value="routine">Mild — routine or follow-up</button>
+    </div>
+    <div class="nav">
+      <button class="btn btn-ghost" onclick="goTo(1)">Back</button>
+      <button class="btn btn-primary" id="next-2" disabled onclick="goTo(3)">Next</button>
+    </div>
+  </div>
+
+  <!-- Step 3: Age group -->
+  <div class="step" id="step-3">
+    <div class="step-label">Step 3 of 4</div>
+    <div class="question">What is the patient's age group?</div>
+    <div class="options">
+      <button class="option-btn" data-key="age" data-value="child">Child (under 12)</button>
+      <button class="option-btn" data-key="age" data-value="teen">Teen (12–17)</button>
+      <button class="option-btn" data-key="age" data-value="adult">Adult (18–64)</button>
+      <button class="option-btn" data-key="age" data-value="senior">Senior (65+)</button>
+    </div>
+    <div class="nav">
+      <button class="btn btn-ghost" onclick="goTo(2)">Back</button>
+      <button class="btn btn-primary" id="next-3" disabled onclick="goTo(4)">Next</button>
+    </div>
+  </div>
+
+  <!-- Step 4: Preferred format -->
+  <div class="step" id="step-4">
+    <div class="step-label">Step 4 of 4</div>
+    <div class="question">How would you prefer to connect?</div>
+    <div class="options">
+      <button class="option-btn" data-key="format" data-value="video">Video call</button>
+      <button class="option-btn" data-key="format" data-value="phone">Phone call</button>
+      <button class="option-btn" data-key="format" data-value="chat">Text / chat</button>
+    </div>
+    <div class="nav">
+      <button class="btn btn-ghost" onclick="goTo(3)">Back</button>
+      <button class="btn btn-primary" id="next-4" disabled onclick="showResult()">See Recommendation</button>
+    </div>
+  </div>
+
+  <!-- Result -->
+  <div class="step" id="step-result">
+    <div class="step-label">Your Recommendation</div>
+
+    <div class="recommendation" id="recBox">
+      <div class="rec-label" id="recLabel"></div>
+      <div class="rec-title" id="recTitle"></div>
+      <div class="rec-desc" id="recDesc"></div>
+    </div>
+
+    <div class="summary-box">
+      <h3>Request Summary</h3>
+      <div class="summary-row"><span>Concern</span><span id="sumConcern"></span></div>
+      <div class="summary-row"><span>Urgency</span><span id="sumUrgency"></span></div>
+      <div class="summary-row"><span>Patient age</span><span id="sumAge"></span></div>
+      <div class="summary-row"><span>Preferred format</span><span id="sumFormat"></span></div>
+      <div class="summary-row"><span>Service type</span><span id="sumService"></span></div>
+    </div>
+
+    <button class="restart-btn" onclick="restart()">Start Over</button>
+  </div>
+</div>
+
+<script>
+  const answers = {};
+  const TOTAL_STEPS = 4;
+
+  // Attach click handlers to all option buttons
+  document.querySelectorAll('.option-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const key = btn.dataset.key;
+      const step = btn.closest('.step').id.replace('step-', '');
+
+      // Deselect siblings
+      btn.closest('.options').querySelectorAll('.option-btn').forEach(b => b.classList.remove('selected'));
+      btn.classList.add('selected');
+
+      answers[key] = btn.dataset.value;
+
+      // Enable the Next button for this step
+      const nextBtn = document.getElementById('next-' + step);
+      if (nextBtn) nextBtn.disabled = false;
+    });
+  });
+
+  function goTo(stepNum) {
+    document.querySelectorAll('.step').forEach(s => s.classList.remove('active'));
+    document.getElementById('step-' + stepNum).classList.add('active');
+
+    const pct = ((stepNum - 1) / TOTAL_STEPS) * 100;
+    document.getElementById('progressFill').style.width = pct + '%';
+  }
+
+  function getRecommendation() {
+    const { concern, urgency } = answers;
+
+    if (urgency === 'emergency') {
+      return {
+        type: 'urgent',
+        label: 'Urgent Attention Needed',
+        title: 'Emergency / Urgent Care',
+        service: 'Emergency / Urgent Care',
+        desc: 'Your symptoms may require immediate in-person evaluation. Please call 911 or go to the nearest emergency room. A telehealth provider can assist you after stabilization.'
+      };
+    }
+    if (concern === 'mental') {
+      return {
+        type: 'mental',
+        label: 'Mental Health Care',
+        title: 'Behavioral Health Telehealth',
+        service: 'Behavioral Health',
+        desc: 'A licensed therapist or psychiatrist can meet with you via telehealth. Sessions are confidential and available via video or phone at a time that works for you.'
+      };
+    }
+    if (concern === 'prescription') {
+      return {
+        type: 'routine',
+        label: 'Routine Care',
+        title: 'Medication / Prescription Review',
+        service: 'Primary Care (Rx)',
+        desc: 'A primary care provider can review your medication needs, renew prescriptions, and answer questions — all via a short telehealth visit.'
+      };
+    }
+    if (concern === 'chronic') {
+      return {
+        type: 'routine',
+        label: 'Ongoing Management',
+        title: 'Chronic Condition Follow-Up',
+        service: 'Specialty / Primary Care',
+        desc: 'A care provider will review your condition history and current symptoms to adjust your care plan as needed.'
+      };
+    }
+    // Default: general physical
+    if (urgency === 'soon') {
+      return {
+        type: 'routine',
+        label: 'General Care',
+        title: 'On-Demand Telehealth Visit',
+        service: 'Primary Care',
+        desc: 'A primary care provider will evaluate your symptoms and recommend next steps, including referrals or prescriptions if needed.'
+      };
+    }
+    return {
+      type: 'routine',
+      label: 'General Care',
+      title: 'Scheduled Primary Care Visit',
+      service: 'Primary Care',
+      desc: 'Schedule a telehealth appointment with a primary care provider at your convenience to discuss your symptoms and get a care plan.'
+    };
+  }
+
+  const labels = {
+    concern:  { physical: 'Physical symptoms', mental: 'Mental health', chronic: 'Chronic condition', prescription: 'Prescription / medication' },
+    urgency:  { emergency: 'Severe / Emergency', soon: 'Soon', routine: 'Routine' },
+    age:      { child: 'Child (under 12)', teen: 'Teen (12–17)', adult: 'Adult (18–64)', senior: 'Senior (65+)' },
+    format:   { video: 'Video call', phone: 'Phone call', chat: 'Text / chat' }
+  };
+
+  function showResult() {
+    const rec = getRecommendation();
+
+    const box = document.getElementById('recBox');
+    box.className = 'recommendation ' + (rec.type === 'routine' ? '' : rec.type);
+    document.getElementById('recLabel').textContent = rec.label;
+    document.getElementById('recTitle').textContent = rec.title;
+    document.getElementById('recDesc').textContent = rec.desc;
+
+    document.getElementById('sumConcern').textContent  = labels.concern[answers.concern];
+    document.getElementById('sumUrgency').textContent  = labels.urgency[answers.urgency];
+    document.getElementById('sumAge').textContent      = labels.age[answers.age];
+    document.getElementById('sumFormat').textContent   = labels.format[answers.format];
+    document.getElementById('sumService').textContent  = rec.service;
+
+    document.querySelectorAll('.step').forEach(s => s.classList.remove('active'));
+    document.getElementById('step-result').classList.add('active');
+    document.getElementById('progressFill').style.width = '100%';
+  }
+
+  function restart() {
+    Object.keys(answers).forEach(k => delete answers[k]);
+    document.querySelectorAll('.option-btn').forEach(b => b.classList.remove('selected'));
+    document.querySelectorAll('.btn[id^="next-"]').forEach(b => b.disabled = true);
+    goTo(1);
+    document.getElementById('progressFill').style.width = '0%';
+  }
+</script>
+</body>
+</html>
