@@ -339,6 +339,18 @@
     /* Invalid state for inputs */
     .text-input.invalid,
     .select-input.invalid { border-color: #e53e3e; }
+
+    /* ── Form note (informational text below a question) ── */
+    .form-note {
+      margin-top: 14px;
+      padding: 11px 14px;
+      background: #f7fafc;
+      border-left: 3px solid #cbd5e0;
+      border-radius: 0 6px 6px 0;
+      font-size: 0.85rem;
+      color: #4a5568;
+      line-height: 1.55;
+    }
   </style>
 </head>
 <body>
@@ -753,6 +765,48 @@
 
   </div><!-- /#section-6 -->
 
+  <!-- ════════════════════════════════════════════
+       SECTION 7 — Specific Services Needed
+       Content is rendered dynamically based on Section 1 answers.
+  ════════════════════════════════════════════ -->
+  <div class="section" id="section-7">
+
+    <!-- 7-1: Conditional service checklist -->
+    <div class="sub-step active" id="ss-7-1">
+      <div class="section-label" id="s7-label">Section 7 — Specific Services Needed &nbsp;·&nbsp; 1 of 2</div>
+      <div class="question-block">
+        <div class="question-text">Which services do you need? (select all that apply)<span class="required-asterisk">*</span></div>
+        <!-- Rendered by JS into this container -->
+        <div class="checkbox-options" id="s7-checkboxes"></div>
+        <div class="field-error" id="s7-error">Please select at least one service.</div>
+        <!-- Optional note rendered by JS -->
+        <p class="form-note" id="s7-note" style="display:none;"></p>
+      </div>
+      <div class="nav">
+        <button class="btn btn-ghost" onclick="goToSection(6)">← Back</button>
+        <button class="btn btn-primary" onclick="goToSubStep(7, 2)">Next</button>
+      </div>
+    </div>
+
+    <!-- 7-2: Preferred provider (optional, all service types) -->
+    <div class="sub-step" id="ss-7-2">
+      <div class="section-label">Section 7 — Specific Services Needed &nbsp;·&nbsp; 2 of 2</div>
+      <div class="question-block">
+        <div class="question-text">
+          Do you have a preferred provider you'd like to work with?
+          <span style="font-weight:400; color:#718096;"> (optional)</span>
+        </div>
+        <input type="text" class="text-input" id="preferredProvider"
+               placeholder="Enter provider name if known" autocomplete="off" />
+      </div>
+      <div class="nav">
+        <button class="btn btn-ghost" onclick="goToSubStep(7, 1)">← Back</button>
+        <button class="btn btn-primary" onclick="goToSection(8)">Next</button>
+      </div>
+    </div>
+
+  </div><!-- /#section-7 -->
+
 </div><!-- /.card -->
 
 <script>
@@ -780,13 +834,16 @@
     coordinatorName:      '',
     coordinatorEmail:     '',
     coordinatorPhone:     '',
+    // Section 7
+    specificServices:     [],   // selected service checkboxes
+    preferredProvider:    '',
   };
 
-  const TOTAL_SECTIONS = 6;
+  const TOTAL_SECTIONS = 7;
   let currentSection = 1;
 
   // Track active sub-step per section (for sections with per-question navigation)
-  const sectionSubSteps = { 5: 1, 6: 1 };
+  const sectionSubSteps = { 5: 1, 6: 1, 7: 1 };
 
   // ── Backend flag constants ───────────────────────────────
   const CREDENTIALING_COUNTIES = new Set([
@@ -934,6 +991,11 @@
       }
     }
 
+    if (num === 7) {
+      // Only sub-step 1 (service selection) requires validation; sub-step 2 is optional
+      if (!validateSubStep(7, 1)) valid = false;
+    }
+
     return valid;
   }
 
@@ -998,6 +1060,14 @@
     if (sectionNum === 6) {
       if (subNum === 1 && !validateContactBlock('primary'))     valid = false;
       if (subNum === 2 && !validateContactBlock('coordinator')) valid = false;
+    }
+    if (sectionNum === 7) {
+      if (subNum === 1) {
+        const ok = formData.specificServices.length > 0;
+        showError('s7-error', !ok);
+        if (!ok) valid = false;
+      }
+      // sub-step 2 (preferred provider) is optional — always valid
     }
     return valid;
   }
@@ -1204,6 +1274,129 @@
 
   initContactBlock('primary');
   initContactBlock('coordinator');
+
+  // ─── Wire up Section 7 ───────────────────────────────────
+
+  // Service options keyed by "serviceType|serviceModel"
+  // For Psychiatry and Nursing, model is always "Direct care delivery"
+  const SERVICE_CONFIGS = {
+    'Psychiatry|': {
+      options: [
+        'Initial medication evaluation',
+        'Ongoing medication treatment and maintenance',
+        'Participation in interdisciplinary or treatment planning meetings',
+      ],
+      note: 'Note: Chart review-heavy paperwork requests (conservatorship, legal holds, second opinion signatures, etc.) should be submitted through our separate Assistance with Paperwork form.',
+    },
+    'Nursing|': {
+      options: [
+        'Assessments (intake assessments, reviews of LVN-completed assessments, etc.)',
+        'Treatment planning, care planning, and treatment appraisals',
+        'Coordinating with external care partners (clinics, labs, primary care, specialists)',
+        'Medication support (transmitting orders, submitting order requests)',
+        'Telehealth visits with clients (health education, standard updates)',
+        'Authorizations and billing support (treatment authorization requests, pharmacy billing)',
+      ],
+      note: null,
+    },
+    'Clinician|Direct care delivery': {
+      options: (state) => {
+        const opts = [
+          'Individual therapy',
+          'Group therapy',
+          'Assessments or assessment bundles (behavioral health assessment, psychosocial assessment, risk assessment, substance use screening, interpretive summary)',
+          'Annual or cadence updates',
+          'Treatment plans, treatment appraisals, or care plans',
+          'Transition or discharge plans',
+        ];
+        if (state === 'Washington') {
+          opts.push('Court testimony or court documentation');
+        }
+        return opts;
+      },
+      note: null,
+    },
+    'Clinician|Leadership': {
+      options: [
+        'Supervision (administrative or clinical for licensure hours)',
+        'Meeting facilitation (morning meetings, treatment plan meetings)',
+        'Documentation approval (progress notes, assessments, treatment plans, co-signatures)',
+        'Training and onboarding (new staff or existing staff refresher)',
+        'Competency evaluations (risk assessment process, note self-approval)',
+        'Audits and chart review',
+        'Admission and referral review',
+        'Survey preparation',
+      ],
+      note: 'Note: Leadership services are provided during business hours only. We do not provide on-call or after-hours support.',
+    },
+  };
+
+  function buildSection7() {
+    const key = `${formData.serviceType || ''}|${formData.serviceModel || ''}`;
+    const config = SERVICE_CONFIGS[key];
+    const container = document.getElementById('s7-checkboxes');
+    const noteEl    = document.getElementById('s7-note');
+
+    // Clear previous state
+    container.innerHTML = '';
+    formData.specificServices = [];
+    showError('s7-error', false);
+
+    if (!config) {
+      // Shouldn't happen if section 1 is validated, but handle gracefully
+      container.innerHTML = '<p style="color:#718096;font-size:.9rem;">No services available for this selection.</p>';
+      noteEl.style.display = 'none';
+      return;
+    }
+
+    const opts = typeof config.options === 'function'
+      ? config.options(formData.programState)
+      : config.options;
+
+    opts.forEach((label, i) => {
+      const id  = `s7-cb-${i}`;
+      const div = document.createElement('div');
+      div.className  = 'checkbox-option';
+      div.dataset.value = label;
+      div.innerHTML  = `
+        <input type="checkbox" id="${id}" value="${label.replace(/"/g, '&quot;')}" />
+        <label for="${id}">${label}</label>`;
+      container.appendChild(div);
+
+      const input = div.querySelector('input');
+      const toggle = () => {
+        div.classList.toggle('selected', input.checked);
+        formData.specificServices = Array.from(
+          container.querySelectorAll('input:checked')
+        ).map(cb => cb.value);
+        if (formData.specificServices.length > 0) showError('s7-error', false);
+      };
+      div.addEventListener('click', e => {
+        if (e.target !== input) input.checked = !input.checked;
+        toggle();
+      });
+      input.addEventListener('change', toggle);
+    });
+
+    if (config.note) {
+      noteEl.textContent = config.note;
+      noteEl.style.display = 'block';
+    } else {
+      noteEl.style.display = 'none';
+    }
+  }
+
+  // Rebuild the checklist every time Section 7 is entered (answers may have changed)
+  const _origGoToSection = goToSection;
+  goToSection = function(num) {
+    _origGoToSection(num);
+    if (num === 7) buildSection7();
+  };
+
+  // 7-2: Preferred provider (optional)
+  document.getElementById('preferredProvider').addEventListener('input', e => {
+    formData.preferredProvider = e.target.value;
+  });
 
   // ─── Init ─────────────────────────────────────────────────
   renderProgress(1);
