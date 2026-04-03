@@ -403,6 +403,136 @@
     }
     .day-grid .checkbox-option label { flex: unset; }
     .flexible-option { grid-column: span 2; }
+
+    /* ── Compact Yes/No question rows (Section 10) ── */
+    .yn-group { display: flex; flex-direction: column; }
+
+    .yn-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+      padding: 13px 0;
+      border-bottom: 1px solid #f0f4f8;
+    }
+    .yn-row:last-child { border-bottom: none; }
+
+    .yn-question {
+      font-size: 0.92rem;
+      color: #2d3748;
+      flex: 1;
+      line-height: 1.4;
+    }
+
+    .yn-btns {
+      display: flex;
+      gap: 6px;
+      flex-shrink: 0;
+    }
+
+    .yn-btn {
+      padding: 6px 18px;
+      border: 2px solid #e2e8f0;
+      border-radius: 6px;
+      background: #f7fafc;
+      color: #4a5568;
+      cursor: pointer;
+      font-size: 0.85rem;
+      font-weight: 500;
+      transition: border-color 0.15s, background 0.15s, color 0.15s;
+      user-select: none;
+      line-height: 1;
+    }
+    .yn-btn:hover { border-color: #93c5fd; background: #f0f7ff; }
+    .yn-btn.sel-yes { border-color: #3b82f6; background: #eff6ff; color: #1e40af; font-weight: 700; }
+    .yn-btn.sel-no  { border-color: #94a3b8; background: #f1f5f9; color: #475569; font-weight: 700; }
+
+    .yn-row.has-error .yn-question { color: #e53e3e; }
+
+    /* ── Confirmation screen ── */
+    .confirm-icon {
+      width: 56px; height: 56px;
+      background: #dcfce7;
+      border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      margin: 0 auto 20px;
+    }
+    .confirm-icon svg { color: #16a34a; }
+
+    .confirm-title {
+      font-size: 1.3rem;
+      font-weight: 700;
+      color: #1a202c;
+      text-align: center;
+      margin-bottom: 8px;
+    }
+
+    .confirm-subtitle {
+      font-size: 0.875rem;
+      color: #718096;
+      text-align: center;
+      margin-bottom: 28px;
+      line-height: 1.5;
+    }
+
+    .confirm-summary {
+      background: #f7fafc;
+      border-radius: 10px;
+      padding: 18px 20px;
+      margin-bottom: 20px;
+    }
+    .confirm-summary h3 {
+      font-size: 0.75rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      color: #718096;
+      margin-bottom: 12px;
+    }
+    .confirm-row {
+      display: flex;
+      justify-content: space-between;
+      gap: 12px;
+      font-size: 0.875rem;
+      margin-bottom: 7px;
+      color: #2d3748;
+    }
+    .confirm-row:last-child { margin-bottom: 0; }
+    .confirm-row span:first-child { color: #718096; flex-shrink: 0; }
+    .confirm-row span:last-child  { font-weight: 600; text-align: right; }
+
+    .confirm-flags {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      margin-bottom: 20px;
+    }
+    .confirm-flag {
+      display: flex;
+      align-items: flex-start;
+      gap: 8px;
+      background: #fffbeb;
+      border: 1px solid #fcd34d;
+      border-radius: 7px;
+      padding: 9px 12px;
+      font-size: 0.82rem;
+      color: #92400e;
+    }
+    .confirm-flag svg { flex-shrink: 0; margin-top: 1px; }
+
+    .btn-restart {
+      width: 100%;
+      padding: 11px;
+      border: 2px solid #e2e8f0;
+      border-radius: 8px;
+      background: #f7fafc;
+      color: #718096;
+      font-size: 0.9rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: border-color 0.15s, color 0.15s;
+    }
+    .btn-restart:hover { border-color: #3b82f6; color: #3b82f6; }
   </style>
 </head>
 <body>
@@ -1024,6 +1154,172 @@
     </div>
   </div><!-- /#section-9 -->
 
+  <!-- ════════════════════════════════════════════
+       SECTION 10 — Access & Systems
+  ════════════════════════════════════════════ -->
+  <div class="section" id="section-10">
+    <div class="section-label">Section 10 — Access &amp; Systems</div>
+
+    <!-- Primary EHR (checkboxes, required) -->
+    <div class="question-block">
+      <div class="question-text">
+        Which electronic health record do you use for clinical documentation?
+        (select all that apply)<span class="required-asterisk">*</span>
+      </div>
+      <div class="checkbox-options" id="ehr-primary-options">
+        <!-- Rendered by buildSection10() from EHR_OPTIONS -->
+      </div>
+      <div class="field-error" id="ehrPrimary-error">Please select at least one EHR system.</div>
+    </div>
+
+    <hr class="section-divider" />
+
+    <!-- Other EHRs (checkboxes, optional) -->
+    <div class="question-block">
+      <div class="question-text">
+        Do you need access to any other EHRs or billing systems?
+        (select all that apply)
+        <span style="font-weight:400;color:#718096;"> (optional)</span>
+      </div>
+      <div class="checkbox-options" id="ehr-other-options">
+        <!-- Rendered by buildSection10() from EHR_OPTIONS -->
+      </div>
+    </div>
+
+    <hr class="section-divider" />
+
+    <!-- Yes/No access questions -->
+    <div class="question-block">
+      <div class="question-text">Provider access requirements<span class="required-asterisk">*</span></div>
+      <div class="yn-group" id="yn-standard">
+        <div class="yn-row" id="yn-sharepoint">
+          <span class="yn-question">Does the provider need access to a SharePoint site?</span>
+          <div class="yn-btns">
+            <button type="button" class="yn-btn" data-key="sharepoint" data-val="Yes">Yes</button>
+            <button type="button" class="yn-btn" data-key="sharepoint" data-val="No">No</button>
+          </div>
+        </div>
+        <div class="yn-row" id="yn-sharedDrive">
+          <span class="yn-question">Does the provider need access to a program shared drive?</span>
+          <div class="yn-btns">
+            <button type="button" class="yn-btn" data-key="sharedDrive" data-val="Yes">Yes</button>
+            <button type="button" class="yn-btn" data-key="sharedDrive" data-val="No">No</button>
+          </div>
+        </div>
+        <div class="yn-row" id="yn-emailDist">
+          <span class="yn-question">Does the provider need to be added to an email distribution group?</span>
+          <div class="yn-btns">
+            <button type="button" class="yn-btn" data-key="emailDist" data-val="Yes">Yes</button>
+            <button type="button" class="yn-btn" data-key="emailDist" data-val="No">No</button>
+          </div>
+        </div>
+        <div class="yn-row" id="yn-sharedInbox">
+          <span class="yn-question">Does the provider need access to a shared inbox?</span>
+          <div class="yn-btns">
+            <button type="button" class="yn-btn" data-key="sharedInbox" data-val="Yes">Yes</button>
+            <button type="button" class="yn-btn" data-key="sharedInbox" data-val="No">No</button>
+          </div>
+        </div>
+        <div class="yn-row" id="yn-teamsChannel">
+          <span class="yn-question">Does the provider need access to a Teams channel?</span>
+          <div class="yn-btns">
+            <button type="button" class="yn-btn" data-key="teamsChannel" data-val="Yes">Yes</button>
+            <button type="button" class="yn-btn" data-key="teamsChannel" data-val="No">No</button>
+          </div>
+        </div>
+        <div class="yn-row" id="yn-teamsChat">
+          <span class="yn-question">Does the provider need access to a Teams chat group?</span>
+          <div class="yn-btns">
+            <button type="button" class="yn-btn" data-key="teamsChat" data-val="Yes">Yes</button>
+            <button type="button" class="yn-btn" data-key="teamsChat" data-val="No">No</button>
+          </div>
+        </div>
+      </div>
+      <div class="field-error" id="yn-standard-error">Please answer all access questions.</div>
+    </div>
+
+    <!-- Leadership-only access questions (shown/hidden by buildSection10) -->
+    <div class="question-block" id="yn-leadership-block" style="display:none;">
+      <div class="question-text">Leadership system access<span class="required-asterisk">*</span></div>
+      <div class="yn-group" id="yn-leadership">
+        <div class="yn-row" id="yn-kronos">
+          <span class="yn-question">Does the provider need access to Kronos (time cards)?</span>
+          <div class="yn-btns">
+            <button type="button" class="yn-btn" data-key="kronos" data-val="Yes">Yes</button>
+            <button type="button" class="yn-btn" data-key="kronos" data-val="No">No</button>
+          </div>
+        </div>
+        <div class="yn-row" id="yn-relias">
+          <span class="yn-question">Does the provider need access to Relias (staff training tracking)?</span>
+          <div class="yn-btns">
+            <button type="button" class="yn-btn" data-key="relias" data-val="Yes">Yes</button>
+            <button type="button" class="yn-btn" data-key="relias" data-val="No">No</button>
+          </div>
+        </div>
+        <div class="yn-row" id="yn-mileage">
+          <span class="yn-question">Does the provider need access to the company mileage system?</span>
+          <div class="yn-btns">
+            <button type="button" class="yn-btn" data-key="mileageSystem" data-val="Yes">Yes</button>
+            <button type="button" class="yn-btn" data-key="mileageSystem" data-val="No">No</button>
+          </div>
+        </div>
+      </div>
+      <div class="field-error" id="yn-leadership-error">Please answer all leadership system access questions.</div>
+    </div>
+
+    <hr class="section-divider" />
+
+    <!-- Other access needs (optional text) -->
+    <div class="question-block">
+      <div class="question-text">
+        Are there any other systems or access needs?
+        <span style="font-weight:400;color:#718096;"> (optional)</span>
+      </div>
+      <input type="text" class="text-input" id="otherAccess"
+             placeholder="Describe any additional access requirements" autocomplete="off" />
+    </div>
+
+    <!-- Section note -->
+    <p class="form-note" style="margin-top: 10px;">
+      An introductory call will be scheduled to help coordinate all access requirements, especially for county-based systems. Please have relevant team members and credentials information ready to ensure we can get started as quickly as possible.
+    </p>
+
+    <div class="nav">
+      <button class="btn btn-ghost" onclick="goToSection(9)">← Back</button>
+      <button class="btn btn-primary" onclick="handleSubmit()">Submit Request</button>
+    </div>
+  </div><!-- /#section-10 -->
+
+  <!-- ════════════════════════════════════════════
+       CONFIRMATION SCREEN
+  ════════════════════════════════════════════ -->
+  <div class="section" id="section-confirm">
+    <div class="confirm-icon">
+      <svg width="28" height="28" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
+        <polyline points="20 6 9 17 4 12"/>
+      </svg>
+    </div>
+    <div class="confirm-title">Your request has been submitted.</div>
+    <div class="confirm-subtitle" id="confirmSubtitle">
+      A confirmation has been sent to your email.<br>
+      A telehealth coordinator will be in touch within 1–2 business days.
+    </div>
+
+    <div class="confirm-summary">
+      <h3>Request Summary</h3>
+      <div class="confirm-row"><span>Program</span><span id="cs-program">—</span></div>
+      <div class="confirm-row"><span>Service</span><span id="cs-service">—</span></div>
+      <div class="confirm-row"><span>Priority</span><span id="cs-priority">—</span></div>
+      <div class="confirm-row"><span>Requested start</span><span id="cs-start">—</span></div>
+      <div class="confirm-row"><span>Coverage</span><span id="cs-coverage">—</span></div>
+      <div class="confirm-row"><span>Primary contact</span><span id="cs-contact">—</span></div>
+    </div>
+
+    <div class="confirm-flags" id="confirmFlags"></div>
+
+    <button class="btn-restart" onclick="restartForm()">Submit another request</button>
+  </div><!-- /#section-confirm -->
+
 </div><!-- /.card -->
 
 <script>
@@ -1061,9 +1357,22 @@
     psychiatryDates:      '',   // psychiatry-only exact dates
     shift:                null,
     hoursPerWeek:         '',
+    // Section 10
+    ehrPrimary:           [],
+    ehrOther:             [],
+    sharepoint:           null,
+    sharedDrive:          null,
+    emailDist:            null,
+    sharedInbox:          null,
+    teamsChannel:         null,
+    teamsChat:            null,
+    kronos:               null, // Leadership only
+    relias:               null, // Leadership only
+    mileageSystem:        null, // Leadership only
+    otherAccess:          '',
   };
 
-  const TOTAL_SECTIONS = 9;
+  const TOTAL_SECTIONS = 10;
   let currentSection = 1;
 
   // Track active sub-step per section (for sections with per-question navigation)
@@ -1248,6 +1557,29 @@
         valid = false;
       } else {
         showError('hours-error', false);
+      }
+    }
+
+    if (num === 10) {
+      if (formData.ehrPrimary.length === 0) {
+        showError('ehrPrimary-error', true);
+        valid = false;
+      } else {
+        showError('ehrPrimary-error', false);
+      }
+
+      const stdKeys = ['sharepoint','sharedDrive','emailDist','sharedInbox','teamsChannel','teamsChat'];
+      const stdMissing = stdKeys.some(k => !formData[k]);
+      showError('yn-standard-error', stdMissing);
+      if (stdMissing) valid = false;
+
+      if (formData.serviceModel === 'Leadership') {
+        const ldKeys = ['kronos','relias','mileageSystem'];
+        const ldMissing = ldKeys.some(k => !formData[k]);
+        showError('yn-leadership-error', ldMissing);
+        if (ldMissing) valid = false;
+      } else {
+        showError('yn-leadership-error', false);
       }
     }
 
@@ -1645,9 +1977,10 @@
   const _origGoToSection = goToSection;
   goToSection = function(num) {
     _origGoToSection(num);
-    if (num === 7) buildSection7();
-    if (num === 8) buildSection8();
-    if (num === 9) buildSection9();
+    if (num === 7)  buildSection7();
+    if (num === 8)  buildSection8();
+    if (num === 9)  buildSection9();
+    if (num === 10) buildSection10();
   };
 
   // 7-2: Preferred provider (optional)
@@ -1826,6 +2159,314 @@
       e.target.classList.remove('invalid');
     }
   });
+
+  // ─── Wire up Section 10 ──────────────────────────────────
+
+  const EHR_OPTIONS = [
+    'Avatar - County',
+    'Avatar - Telecare Community',
+    'Avatar - Telecare 24/7',
+    'Avatar - Telecare PM',
+    'Caminar',
+    'Clinicians Gateway',
+    'Credible',
+    'PointClickCare',
+    'SmartCare - CalMHSA',
+    'SmartCare - County',
+  ];
+
+  function buildEhrCheckboxes(containerId, dataKey) {
+    const container = document.getElementById(containerId);
+    if (!container || container.children.length > 0) return; // only build once
+    EHR_OPTIONS.forEach((label, i) => {
+      const id  = `${containerId}-cb-${i}`;
+      const div = document.createElement('div');
+      div.className     = 'checkbox-option';
+      div.dataset.value = label;
+      div.innerHTML     = `<input type="checkbox" id="${id}" value="${label}" /><label for="${id}">${label}</label>`;
+      container.appendChild(div);
+
+      const input  = div.querySelector('input');
+      const toggle = () => {
+        div.classList.toggle('selected', input.checked);
+        formData[dataKey] = Array.from(container.querySelectorAll('input:checked')).map(cb => cb.value);
+        if (dataKey === 'ehrPrimary' && formData.ehrPrimary.length > 0) showError('ehrPrimary-error', false);
+      };
+      div.addEventListener('click', e => { if (e.target !== input) input.checked = !input.checked; toggle(); });
+      input.addEventListener('change', toggle);
+    });
+  }
+
+  // Generic yn-btn group initialiser — handles any group of yn-btn elements
+  function initYnGroup(containerId, onAnswer) {
+    const container = document.getElementById(containerId);
+    if (!container) return;
+    container.querySelectorAll('.yn-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const key = btn.dataset.key;
+        const val = btn.dataset.val;
+        formData[key] = val;
+        // Update visual state for this key within the group
+        container.querySelectorAll(`.yn-btn[data-key="${key}"]`).forEach(b => {
+          b.classList.remove('sel-yes', 'sel-no');
+        });
+        btn.classList.add(val === 'Yes' ? 'sel-yes' : 'sel-no');
+        if (onAnswer) onAnswer(key, val);
+      });
+    });
+  }
+
+  function buildSection10() {
+    // Render EHR checkboxes (idempotent — only runs on first entry)
+    buildEhrCheckboxes('ehr-primary-options', 'ehrPrimary');
+    buildEhrCheckboxes('ehr-other-options',   'ehrOther');
+
+    // Show Leadership-only block
+    const isLeadership = formData.serviceModel === 'Leadership';
+    document.getElementById('yn-leadership-block').style.display = isLeadership ? 'block' : 'none';
+
+    // Re-apply any previously saved yn answers (user navigated back)
+    const allKeys = ['sharepoint','sharedDrive','emailDist','sharedInbox',
+                     'teamsChannel','teamsChat','kronos','relias','mileageSystem'];
+    allKeys.forEach(key => {
+      if (!formData[key]) return;
+      document.querySelectorAll(`.yn-btn[data-key="${key}"]`).forEach(btn => {
+        btn.classList.remove('sel-yes', 'sel-no');
+        if (btn.dataset.val === formData[key]) {
+          btn.classList.add(formData[key] === 'Yes' ? 'sel-yes' : 'sel-no');
+        }
+      });
+    });
+  }
+
+  initYnGroup('yn-standard',    (key) => { showError('yn-standard-error', false); });
+  initYnGroup('yn-leadership',  (key) => { showError('yn-leadership-error', false); });
+
+  document.getElementById('otherAccess').addEventListener('input', e => {
+    formData.otherAccess = e.target.value;
+  });
+
+  // ─── Submission & Emails ─────────────────────────────────
+
+  // ┌─────────────────────────────────────────────────────────┐
+  // │  CONFIG — update these values before deploying          │
+  // │                                                         │
+  // │  SUBMIT_ENDPOINT: URL to receive form POST (JSON).      │
+  // │    Options: Formspree, Zapier webhook, custom backend.  │
+  // │    Set to null to skip network call (still confirms).   │
+  // │                                                         │
+  // │  COORDINATOR_EMAIL: shown in confirmation screen and    │
+  // │    included in the POST payload for routing.            │
+  // └─────────────────────────────────────────────────────────┘
+  const CONFIG = {
+    SUBMIT_ENDPOINT:   null,                          // e.g. 'https://formspree.io/f/YOUR_ID'
+    COORDINATOR_EMAIL: 'coordinator@example.com',     // update with real address
+  };
+
+  function fmt(v) { return v || '—'; }
+  function fmtArr(arr) { return arr && arr.length ? arr.join(', ') : '—'; }
+
+  function buildConfirmationEmailBody() {
+    const d = formData;
+    const licenseType = deriveLicenseType() || '—';
+    const isLeadership = d.serviceModel === 'Leadership';
+
+    const flags = [];
+    if (d.credentialingRequired) flags.push(`⚠ Credentialing required — ${d.programCounty}`);
+    if (d.clearanceRequired === 'CCL')  flags.push('⚠ Community Care Licensing (CCL) clearance required');
+    if (d.clearanceRequired === 'DHCS') flags.push('⚠ DHCS clearance required');
+
+    return `NEW TELEHEALTH SERVICE REQUEST
+${'='.repeat(40)}
+
+SERVICE
+  Type:              ${fmt(d.serviceType)}
+  Model:             ${fmt(d.serviceModel)}
+  Specific services: ${fmtArr(d.specificServices)}
+  Preferred provider:${fmt(d.preferredProvider)}
+
+REASON FOR REQUEST
+  ${fmtArr(d.reasons)}${d.vacantRoles ? '\n  Vacant roles: ' + d.vacantRoles : ''}
+
+TIMING
+  Start date:        ${fmt(d.startDate)}
+  Priority:          ${fmt(d.priority)}
+  Coverage days:     ${fmtArr(d.coverageDays)}${d.psychiatryDates ? '\n  Exact dates: ' + d.psychiatryDates : ''}
+  Coverage time:     ${fmt(d.shift)}
+  Hours per week:    ${fmt(d.hoursPerWeek)}
+
+PROGRAM
+  Name:              ${fmt(d.programName)}
+  Number:            ${fmt(d.programNumber)}
+  State:             ${fmt(d.programState)}
+  County:            ${fmt(d.programCounty)}
+  Program type:      ${fmt(d.programType)}
+  Telehealth exp:    ${fmt(d.telehealthExp)}
+
+PROVIDER REQUIREMENTS
+  License type:      ${licenseType}
+  Medicare/P10:      ${fmt(d.medicareRequired)}
+  Credentialing:     ${d.credentialingRequired ? 'YES — ' + d.programCounty : 'Not required'}
+  Background check:  ${d.clearanceRequired ? d.clearanceRequired + ' clearance required' : 'Not required'}
+
+${flags.length ? 'FLAGS\n  ' + flags.join('\n  ') + '\n\n' : ''}CONTACTS
+  Primary contact:   ${fmt(d.primaryName)} | ${fmt(d.primaryEmail)} | ${fmt(d.primaryPhone)}
+  Coordinator:       ${fmt(d.coordinatorName)} | ${fmt(d.coordinatorEmail)} | ${fmt(d.coordinatorPhone)}
+
+ACCESS & SYSTEMS
+  Primary EHRs:      ${fmtArr(d.ehrPrimary)}
+  Other EHRs:        ${fmtArr(d.ehrOther)}
+  SharePoint:        ${fmt(d.sharepoint)}
+  Shared drive:      ${fmt(d.sharedDrive)}
+  Email dist. group: ${fmt(d.emailDist)}
+  Shared inbox:      ${fmt(d.sharedInbox)}
+  Teams channel:     ${fmt(d.teamsChannel)}
+  Teams chat group:  ${fmt(d.teamsChat)}${isLeadership ? `
+  Kronos:            ${fmt(d.kronos)}
+  Relias:            ${fmt(d.relias)}
+  Mileage system:    ${fmt(d.mileageSystem)}` : ''}
+  Other access:      ${fmt(d.otherAccess)}`;
+  }
+
+  function buildRequestorEmailBody() {
+    const d = formData;
+    return `Dear ${d.primaryName},
+
+Thank you — your telehealth service request for ${d.programName} has been received.
+
+SUMMARY
+  Service type:  ${fmt(d.serviceType)}${d.serviceModel ? ' — ' + d.serviceModel : ''}
+  Priority:      ${fmt(d.priority)}
+  Start date:    ${fmt(d.startDate)}
+  Program:       ${fmt(d.programName)} (${fmt(d.programNumber)})
+
+A telehealth coordinator will be in touch within 1–2 business days to schedule an introductory call. Please have your system credentials and relevant team members available.
+
+Questions? Reply to this email or contact your telehealth coordinator directly.
+
+— Telehealth Services Team`;
+  }
+
+  async function handleSubmit() {
+    if (!validateSection(10)) return;
+
+    // Build payload
+    const payload = {
+      to_requestor:   formData.primaryEmail,
+      to_coordinator: CONFIG.COORDINATOR_EMAIL,
+      subject_requestor:   `Telehealth Service Request Received — ${formData.programName || 'New Request'}`,
+      subject_coordinator: `New Request [${formData.priority}] — ${formData.programName} — ${formData.serviceType}`,
+      body_requestor:   buildRequestorEmailBody(),
+      body_coordinator: buildConfirmationEmailBody(),
+      form_data: { ...formData },
+    };
+
+    // Send to configured endpoint (non-blocking — confirmation shows either way)
+    if (CONFIG.SUBMIT_ENDPOINT) {
+      try {
+        await fetch(CONFIG.SUBMIT_ENDPOINT, {
+          method:  'POST',
+          headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
+          body:    JSON.stringify(payload),
+        });
+      } catch (err) {
+        console.warn('Submission endpoint error:', err);
+        // Continue to show confirmation regardless of network error
+      }
+    }
+
+    showConfirmation();
+  }
+
+  function showConfirmation() {
+    const d = formData;
+
+    // Populate summary rows
+    document.getElementById('cs-program').textContent =
+      `${d.programName}${d.programNumber ? ' (' + d.programNumber + ')' : ''}`;
+    document.getElementById('cs-service').textContent =
+      d.serviceModel ? `${d.serviceType} — ${d.serviceModel}` : d.serviceType;
+    document.getElementById('cs-priority').textContent = fmt(d.priority);
+    document.getElementById('cs-start').textContent    = fmt(d.startDate);
+    document.getElementById('cs-coverage').textContent =
+      `${fmtArr(d.coverageDays)} · ${fmt(d.shift)} · ${fmt(d.hoursPerWeek)} hrs/wk`;
+    document.getElementById('cs-contact').textContent  =
+      `${d.primaryName} (${d.primaryEmail})`;
+
+    // Render active flags
+    const flagsEl = document.getElementById('confirmFlags');
+    flagsEl.innerHTML = '';
+    const warnSvg = `<svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 9v2m0 4h.01M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/></svg>`;
+    if (d.credentialingRequired) {
+      flagsEl.innerHTML += `<div class="confirm-flag">${warnSvg} <span><strong>Credentialing required</strong> — ${d.programCounty} county</span></div>`;
+    }
+    if (d.clearanceRequired === 'CCL') {
+      flagsEl.innerHTML += `<div class="confirm-flag">${warnSvg} <span><strong>CCL clearance required</strong> — Community Care Licensing</span></div>`;
+    }
+    if (d.clearanceRequired === 'DHCS') {
+      flagsEl.innerHTML += `<div class="confirm-flag">${warnSvg} <span><strong>DHCS clearance required</strong> — Dept. of Health Care Services</span></div>`;
+    }
+
+    // Update subtitle with requestor email
+    document.getElementById('confirmSubtitle').innerHTML =
+      `A confirmation has been sent to <strong>${d.primaryEmail}</strong>.<br>A telehealth coordinator will be in touch within 1–2 business days.`;
+
+    // Show confirmation, hide progress
+    document.querySelector('.progress-wrapper').style.display = 'none';
+    document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+    document.getElementById('section-confirm').classList.add('active');
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }
+
+  function restartForm() {
+    // Reset formData
+    Object.keys(formData).forEach(k => {
+      if (Array.isArray(formData[k]))   formData[k] = [];
+      else if (typeof formData[k] === 'boolean') formData[k] = false;
+      else formData[k] = null;
+    });
+    formData.reasons = []; formData.specificServices = []; formData.ehrPrimary = []; formData.ehrOther = [];
+    formData.vacantRoles = ''; formData.preferredProvider = ''; formData.otherAccess = '';
+    formData.programName = formData.programNumber = formData.programState = '';
+    formData.programCounty = formData.primaryName = formData.primaryEmail = '';
+    formData.primaryPhone = formData.coordinatorName = formData.coordinatorEmail = '';
+    formData.coordinatorPhone = formData.psychiatryDates = formData.hoursPerWeek = '';
+    formData.startDate = '';
+    currentSection = 1;
+    Object.keys(sectionSubSteps).forEach(k => { sectionSubSteps[k] = 1; });
+
+    // Clear all inputs and selections
+    document.querySelectorAll('input[type="radio"], input[type="checkbox"]')
+      .forEach(el => { el.checked = false; });
+    document.querySelectorAll('.radio-option, .checkbox-option')
+      .forEach(el => el.classList.remove('selected'));
+    document.querySelectorAll('.yn-btn')
+      .forEach(el => el.classList.remove('sel-yes', 'sel-no'));
+    document.querySelectorAll('.text-input, .select-input, .number-input')
+      .forEach(el => { el.value = ''; el.classList.remove('invalid'); });
+    document.querySelectorAll('.field-error').forEach(el => el.classList.remove('visible'));
+    document.querySelectorAll('.warn-banner, .info-banner').forEach(el => el.classList.remove('visible'));
+    document.getElementById('q2-block').style.display = 'none';
+    document.getElementById('vacant-roles-field').classList.remove('visible');
+    document.getElementById('psychiatryDatesField').classList.remove('visible');
+
+    // Reset EHR checkboxes (rebuilt fresh next time section 10 is entered)
+    document.getElementById('ehr-primary-options').innerHTML = '';
+    document.getElementById('ehr-other-options').innerHTML   = '';
+
+    document.querySelector('.progress-wrapper').style.display = 'block';
+    document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+
+    // Reset sub-steps
+    document.querySelectorAll('.sub-step').forEach(s => s.classList.remove('active'));
+    document.querySelector('#section-1').classList.add('active');
+    document.querySelector('#ss-5-1').classList.add('active');
+    document.querySelector('#ss-6-1').classList.add('active');
+    document.querySelector('#ss-7-1').classList.add('active');
+
+    document.getElementById('section-1').classList.add('active');
+    renderProgress(1);
+  }
 
   // ─── Init ─────────────────────────────────────────────────
   renderProgress(1);
