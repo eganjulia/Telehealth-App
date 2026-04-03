@@ -351,6 +351,58 @@
       color: #4a5568;
       line-height: 1.55;
     }
+
+    /* ── Auto-populated display field ── */
+    .display-field {
+      padding: 10px 13px;
+      background: #eff6ff;
+      border: 2px solid #93c5fd;
+      border-radius: 8px;
+      font-size: 0.92rem;
+      color: #1e40af;
+      font-weight: 500;
+      min-height: 42px;
+      display: flex;
+      align-items: center;
+      line-height: 1.4;
+    }
+    .display-field.not-required {
+      background: #f7fafc;
+      border-color: #e2e8f0;
+      color: #718096;
+      font-weight: 400;
+      font-style: italic;
+    }
+
+    /* ── Number input ── */
+    .number-input {
+      width: 130px;
+      border: 2px solid #e2e8f0;
+      border-radius: 8px;
+      padding: 10px 13px;
+      font-size: 0.92rem;
+      color: #2d3748;
+      outline: none;
+      transition: border-color 0.15s;
+      font-family: inherit;
+    }
+    .number-input:focus { border-color: #3b82f6; }
+    .number-input.invalid { border-color: #e53e3e; }
+
+    /* ── Day-of-week checkbox grid ── */
+    .day-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 8px;
+    }
+    .day-grid .checkbox-option {
+      justify-content: center;
+      padding: 10px 8px;
+      text-align: center;
+      font-size: 0.85rem;
+    }
+    .day-grid .checkbox-option label { flex: unset; }
+    .flexible-option { grid-column: span 2; }
   </style>
 </head>
 <body>
@@ -807,6 +859,171 @@
 
   </div><!-- /#section-7 -->
 
+  <!-- ════════════════════════════════════════════
+       SECTION 8 — Provider Requirements
+       License type and clearance fields are auto-populated
+       from Sections 1 and 5 answers.
+  ════════════════════════════════════════════ -->
+  <div class="section" id="section-8">
+    <div class="section-label">Section 8 — Provider Requirements</div>
+
+    <!-- License type (auto-populated) -->
+    <div class="question-block">
+      <div class="question-text">What license type is required for this role?</div>
+      <div class="display-field" id="licenseTypeDisplay">—</div>
+    </div>
+
+    <!-- County credentialing (conditional auto-populated) -->
+    <div class="question-block" id="credentialingBlock">
+      <div class="question-text">What county requires credentialing?</div>
+      <div class="display-field" id="credentialingDisplay">—</div>
+    </div>
+
+    <hr class="section-divider" />
+
+    <!-- Medicare / P10 (required radio) -->
+    <div class="question-block">
+      <div class="question-text">
+        Is a Medicare/P10 number required?<span class="required-asterisk">*</span>
+      </div>
+      <div class="radio-options" id="medicare-options">
+        <div class="radio-option" data-value="Yes">
+          <input type="radio" name="medicareRequired" id="medicare-yes" value="Yes" />
+          <label for="medicare-yes">Yes</label>
+        </div>
+        <div class="radio-option" data-value="No">
+          <input type="radio" name="medicareRequired" id="medicare-no" value="No" />
+          <label for="medicare-no">No</label>
+        </div>
+      </div>
+      <div class="field-error" id="medicare-error">Please indicate whether a Medicare/P10 number is required.</div>
+    </div>
+
+    <hr class="section-divider" />
+
+    <!-- Background clearance (auto-populated) -->
+    <div class="question-block">
+      <div class="question-text">Is background clearance required?</div>
+      <div class="display-field" id="clearanceDisplay">—</div>
+    </div>
+
+    <div class="nav">
+      <button class="btn btn-ghost" onclick="goToSection(7)">← Back</button>
+      <button class="btn btn-primary" onclick="goToSection(9)">Next</button>
+    </div>
+  </div><!-- /#section-8 -->
+
+  <!-- ════════════════════════════════════════════
+       SECTION 9 — Schedule Details
+  ════════════════════════════════════════════ -->
+  <div class="section" id="section-9">
+    <div class="section-label">Section 9 — Schedule Details</div>
+
+    <!-- Days of week -->
+    <div class="question-block">
+      <div class="question-text">
+        Which days of the week do you need coverage?<span class="required-asterisk">*</span>
+      </div>
+      <div class="day-grid" id="days-options">
+        <div class="checkbox-option" data-value="Monday">
+          <input type="checkbox" name="days" id="day-mon" value="Monday" />
+          <label for="day-mon">Mon</label>
+        </div>
+        <div class="checkbox-option" data-value="Tuesday">
+          <input type="checkbox" name="days" id="day-tue" value="Tuesday" />
+          <label for="day-tue">Tue</label>
+        </div>
+        <div class="checkbox-option" data-value="Wednesday">
+          <input type="checkbox" name="days" id="day-wed" value="Wednesday" />
+          <label for="day-wed">Wed</label>
+        </div>
+        <div class="checkbox-option" data-value="Thursday">
+          <input type="checkbox" name="days" id="day-thu" value="Thursday" />
+          <label for="day-thu">Thu</label>
+        </div>
+        <div class="checkbox-option" data-value="Friday">
+          <input type="checkbox" name="days" id="day-fri" value="Friday" />
+          <label for="day-fri">Fri</label>
+        </div>
+        <div class="checkbox-option" data-value="Saturday">
+          <input type="checkbox" name="days" id="day-sat" value="Saturday" />
+          <label for="day-sat">Sat</label>
+        </div>
+        <div class="checkbox-option" data-value="Sunday">
+          <input type="checkbox" name="days" id="day-sun" value="Sunday" />
+          <label for="day-sun">Sun</label>
+        </div>
+        <div class="checkbox-option flexible-option" data-value="Flexible" id="day-flexible-opt">
+          <input type="checkbox" name="days" id="day-flexible" value="Flexible" />
+          <label for="day-flexible">Flexible</label>
+        </div>
+      </div>
+      <div class="field-error" id="days-error">Please select at least one day or choose Flexible.</div>
+
+      <!-- Psychiatry-only: exact dates field -->
+      <div class="sub-field" id="psychiatryDatesField">
+        <label for="psychiatryDates">Please specify the exact dates you need coverage</label>
+        <input type="text" id="psychiatryDates"
+               placeholder="e.g., next Tuesday and next Thursday" />
+      </div>
+    </div>
+
+    <hr class="section-divider" />
+
+    <!-- Coverage times -->
+    <div class="question-block">
+      <div class="question-text">
+        What times do you need coverage?<span class="required-asterisk">*</span>
+      </div>
+      <div class="radio-options" id="shift-options">
+        <div class="radio-option" data-value="Business hours (9 AM to 5 PM)">
+          <input type="radio" name="shift" id="shift-business" value="Business hours (9 AM to 5 PM)" />
+          <label for="shift-business">Business hours (9 AM to 5 PM)</label>
+        </div>
+        <div class="radio-option" data-value="AM shift (7 AM to 3:30 PM)">
+          <input type="radio" name="shift" id="shift-am" value="AM shift (7 AM to 3:30 PM)" />
+          <label for="shift-am">AM shift (7 AM to 3:30 PM)</label>
+        </div>
+        <div class="radio-option" data-value="PM shift (3 PM to 11:30 PM)">
+          <input type="radio" name="shift" id="shift-pm" value="PM shift (3 PM to 11:30 PM)" />
+          <label for="shift-pm">PM shift (3 PM to 11:30 PM)</label>
+        </div>
+        <div class="radio-option" data-value="Night shift (11 PM to 7:30 AM)">
+          <input type="radio" name="shift" id="shift-night" value="Night shift (11 PM to 7:30 AM)" />
+          <label for="shift-night">Night shift (11 PM to 7:30 AM)</label>
+        </div>
+        <div class="radio-option" data-value="Flexible">
+          <input type="radio" name="shift" id="shift-flexible" value="Flexible" />
+          <label for="shift-flexible">Flexible</label>
+        </div>
+      </div>
+      <div class="field-error" id="shift-error">Please select a coverage time.</div>
+
+      <!-- Leadership-only note -->
+      <p class="form-note" id="leadershipShiftNote" style="display:none;">
+        Leadership services are provided during business hours only. We do not provide on-call or after-hours support.
+      </p>
+    </div>
+
+    <hr class="section-divider" />
+
+    <!-- Hours per week -->
+    <div class="question-block">
+      <div class="question-text">
+        How many hours per week do you need this service?<span class="required-asterisk">*</span>
+      </div>
+      <input type="number" class="number-input" id="hoursPerWeek"
+             min="1" max="168" placeholder="e.g., 20" />
+      <div class="field-error" id="hours-error">Please enter a number of hours greater than 0.</div>
+      <p class="form-note" id="hoursGuidanceNote" style="display:none;"></p>
+    </div>
+
+    <div class="nav">
+      <button class="btn btn-ghost" onclick="goToSection(8)">← Back</button>
+      <button class="btn btn-primary" onclick="goToSection(10)">Next</button>
+    </div>
+  </div><!-- /#section-9 -->
+
 </div><!-- /.card -->
 
 <script>
@@ -837,9 +1054,16 @@
     // Section 7
     specificServices:     [],   // selected service checkboxes
     preferredProvider:    '',
+    // Section 8
+    medicareRequired:     null,
+    // Section 9
+    coverageDays:         [],   // array of selected days (or ['Flexible'])
+    psychiatryDates:      '',   // psychiatry-only exact dates
+    shift:                null,
+    hoursPerWeek:         '',
   };
 
-  const TOTAL_SECTIONS = 7;
+  const TOTAL_SECTIONS = 9;
   let currentSection = 1;
 
   // Track active sub-step per section (for sections with per-question navigation)
@@ -994,6 +1218,37 @@
     if (num === 7) {
       // Only sub-step 1 (service selection) requires validation; sub-step 2 is optional
       if (!validateSubStep(7, 1)) valid = false;
+    }
+
+    if (num === 8) {
+      if (!formData.medicareRequired) {
+        showError('medicare-error', true);
+        valid = false;
+      } else {
+        showError('medicare-error', false);
+      }
+    }
+
+    if (num === 9) {
+      if (formData.coverageDays.length === 0) {
+        showError('days-error', true);
+        valid = false;
+      } else {
+        showError('days-error', false);
+      }
+      if (!formData.shift) {
+        showError('shift-error', true);
+        valid = false;
+      } else {
+        showError('shift-error', false);
+      }
+      const hrs = Number(formData.hoursPerWeek);
+      if (!formData.hoursPerWeek || isNaN(hrs) || hrs < 1) {
+        showError('hours-error', true);
+        valid = false;
+      } else {
+        showError('hours-error', false);
+      }
     }
 
     return valid;
@@ -1386,16 +1641,190 @@
     }
   }
 
-  // Rebuild the checklist every time Section 7 is entered (answers may have changed)
+  // Rebuild dynamic content whenever a section with auto-populated fields is entered
   const _origGoToSection = goToSection;
   goToSection = function(num) {
     _origGoToSection(num);
     if (num === 7) buildSection7();
+    if (num === 8) buildSection8();
+    if (num === 9) buildSection9();
   };
 
   // 7-2: Preferred provider (optional)
   document.getElementById('preferredProvider').addEventListener('input', e => {
     formData.preferredProvider = e.target.value;
+  });
+
+  // ─── Wire up Section 8 ───────────────────────────────────
+
+  // License type mapping: serviceType + programState + programType → display string
+  function deriveLicenseType() {
+    const { serviceType, programState, programType } = formData;
+    if (!serviceType) return null;
+
+    if (serviceType === 'Psychiatry') {
+      return 'MD, DO, or Psychiatric Mental Health Nurse Practitioner (PMHNP)';
+    }
+    if (serviceType === 'Nursing') {
+      const needsLVN = ['Skilled nursing', 'Subacute'].includes(programType);
+      return needsLVN
+        ? 'Registered Nurse (RN) or Licensed Vocational Nurse (LVN)'
+        : 'Registered Nurse (RN)';
+    }
+    if (serviceType === 'Clinician') {
+      const byState = {
+        'California': 'LCSW, MFT, or LPCC',
+        'Oregon':     'LCSW or LPC',
+        'Washington': 'LICSW, LMFT, or LMHC',
+        'Arizona':    'LCSW or LPC',
+        'Nebraska':   'LCSW or LIMHP',
+      };
+      const base = byState[programState] || 'Licensed clinical professional';
+      return programState ? `${base} (${programState} license required)` : base;
+    }
+    return null;
+  }
+
+  function buildSection8() {
+    // License type
+    const licenseType = deriveLicenseType();
+    const licenseEl = document.getElementById('licenseTypeDisplay');
+    if (licenseType) {
+      licenseEl.textContent = licenseType;
+      licenseEl.className = 'display-field';
+    } else {
+      licenseEl.textContent = 'Not determined';
+      licenseEl.className = 'display-field not-required';
+    }
+
+    // County credentialing
+    const credBlock = document.getElementById('credentialingBlock');
+    const credEl    = document.getElementById('credentialingDisplay');
+    if (formData.credentialingRequired && formData.programCounty) {
+      credEl.textContent = formData.programCounty;
+      credEl.className   = 'display-field';
+      credBlock.style.display = 'block';
+    } else {
+      credEl.textContent = 'Not required';
+      credEl.className   = 'display-field not-required';
+      credBlock.style.display = 'block'; // always show the row; value indicates status
+    }
+
+    // Background clearance
+    const clearEl = document.getElementById('clearanceDisplay');
+    if (formData.clearanceRequired === 'CCL') {
+      clearEl.textContent = 'Yes — Community Care Licensing (CCL) clearance required';
+      clearEl.className   = 'display-field';
+    } else if (formData.clearanceRequired === 'DHCS') {
+      clearEl.textContent = 'Yes — DHCS (Department of Health Care Services) clearance required';
+      clearEl.className   = 'display-field';
+    } else {
+      clearEl.textContent = 'Not required';
+      clearEl.className   = 'display-field not-required';
+    }
+
+    // Re-apply saved Medicare/P10 selection if user is revisiting
+    document.querySelectorAll('#medicare-options .radio-option').forEach(opt => {
+      opt.classList.toggle('selected', opt.dataset.value === formData.medicareRequired);
+      const inp = opt.querySelector('input');
+      inp.checked = opt.dataset.value === formData.medicareRequired;
+    });
+  }
+
+  initRadioGroup('medicare-options', 'medicareRequired', () => {
+    showError('medicare-error', false);
+  });
+
+  // ─── Wire up Section 9 ───────────────────────────────────
+
+  function buildSection9() {
+    // Show Psychiatry exact-dates field
+    const isPsych = formData.serviceType === 'Psychiatry';
+    document.getElementById('psychiatryDatesField').classList.toggle('visible', isPsych);
+
+    // Show Leadership shift note
+    const isLeadership = formData.serviceModel === 'Leadership';
+    document.getElementById('leadershipShiftNote').style.display = isLeadership ? 'block' : 'none';
+
+    // Guidance note for hours
+    const noteEl = document.getElementById('hoursGuidanceNote');
+    if (isLeadership) {
+      noteEl.textContent = 'Please consider: the number of staff requiring supervision, number of meetings per week, and volume of other administrative tasks. We\'ll refine this estimate during our introductory meeting.';
+      noteEl.style.display = 'block';
+    } else if (formData.serviceType) {
+      noteEl.textContent = 'Please consider: the number of clients being served per week and the specific service being requested in terms of time it takes. Our direct care telehealth providers are expected to provide direct care services for sixty-five percent of their time, with the remaining thirty-five percent used for team meetings, documentation, and other non-billable work. We\'ll refine this estimate during our introductory meeting.';
+      noteEl.style.display = 'block';
+    } else {
+      noteEl.style.display = 'none';
+    }
+  }
+
+  // Days of week — Flexible is mutually exclusive with specific days
+  (function() {
+    const container    = document.getElementById('days-options');
+    const flexibleCb   = document.getElementById('day-flexible');
+    const flexibleOpt  = document.getElementById('day-flexible-opt');
+    const specificCbs  = Array.from(container.querySelectorAll('input[type="checkbox"]'))
+                          .filter(cb => cb.id !== 'day-flexible');
+
+    function syncDays() {
+      formData.coverageDays = Array.from(
+        container.querySelectorAll('input[type="checkbox"]:checked')
+      ).map(cb => cb.value);
+      if (formData.coverageDays.length > 0) showError('days-error', false);
+    }
+
+    // Specific day clicked → uncheck Flexible
+    specificCbs.forEach(cb => {
+      const opt = cb.closest('.checkbox-option');
+      const toggle = () => {
+        opt.classList.toggle('selected', cb.checked);
+        if (cb.checked) {
+          flexibleCb.checked = false;
+          flexibleOpt.classList.remove('selected');
+        }
+        syncDays();
+      };
+      opt.addEventListener('click', e => {
+        if (e.target !== cb) cb.checked = !cb.checked;
+        toggle();
+      });
+      cb.addEventListener('change', toggle);
+    });
+
+    // Flexible clicked → uncheck all specific days
+    const flexToggle = () => {
+      flexibleOpt.classList.toggle('selected', flexibleCb.checked);
+      if (flexibleCb.checked) {
+        specificCbs.forEach(cb => {
+          cb.checked = false;
+          cb.closest('.checkbox-option').classList.remove('selected');
+        });
+      }
+      syncDays();
+    };
+    flexibleOpt.addEventListener('click', e => {
+      if (e.target !== flexibleCb) flexibleCb.checked = !flexibleCb.checked;
+      flexToggle();
+    });
+    flexibleCb.addEventListener('change', flexToggle);
+  })();
+
+  initRadioGroup('shift-options', 'shift', () => {
+    showError('shift-error', false);
+  });
+
+  document.getElementById('psychiatryDates').addEventListener('input', e => {
+    formData.psychiatryDates = e.target.value;
+  });
+
+  document.getElementById('hoursPerWeek').addEventListener('input', e => {
+    formData.hoursPerWeek = e.target.value;
+    const hrs = Number(e.target.value);
+    if (hrs > 0) {
+      showError('hours-error', false);
+      e.target.classList.remove('invalid');
+    }
   });
 
   // ─── Init ─────────────────────────────────────────────────
