@@ -1014,7 +1014,7 @@
     <!-- Medicare / P10 (required radio) -->
     <div class="question-block">
       <div class="question-text">
-        Is a Medicare/P10 number required?<span class="required-asterisk">*</span>
+        Is a Medicare PTAN required?<span class="required-asterisk">*</span>
       </div>
       <div class="radio-options" id="medicare-options">
         <div class="radio-option" data-value="Yes">
@@ -1026,7 +1026,7 @@
           <label for="medicare-no">No</label>
         </div>
       </div>
-      <div class="field-error" id="medicare-error">Please indicate whether a Medicare/P10 number is required.</div>
+      <div class="field-error" id="medicare-error">Please indicate whether a Medicare PTAN is required.</div>
     </div>
 
     <hr class="section-divider" />
@@ -1106,9 +1106,9 @@
         What times do you need coverage?<span class="required-asterisk">*</span>
       </div>
       <div class="radio-options" id="shift-options">
-        <div class="radio-option" data-value="Business hours (9 AM to 5 PM)">
-          <input type="radio" name="shift" id="shift-business" value="Business hours (9 AM to 5 PM)" />
-          <label for="shift-business">Business hours (9 AM to 5 PM)</label>
+        <div class="radio-option" data-value="Business hours (8:30 AM to 5 PM)">
+          <input type="radio" name="shift" id="shift-business" value="Business hours (8:30 AM to 5 PM)" />
+          <label for="shift-business">Business hours (8:30 AM to 5 PM)</label>
         </div>
         <div class="radio-option" data-value="AM shift (7 AM to 3:30 PM)">
           <input type="radio" name="shift" id="shift-am" value="AM shift (7 AM to 3:30 PM)" />
@@ -2005,15 +2005,25 @@
         : 'Registered Nurse (RN)';
     }
     if (serviceType === 'Clinician') {
-      const byState = {
+      const licensed = {
         'California': 'LCSW, MFT, or LPCC',
         'Oregon':     'LCSW or LPC',
         'Washington': 'LICSW, LMFT, or LMHC',
         'Arizona':    'LCSW or LPC',
         'Nebraska':   'LCSW or LIMHP',
       };
-      const base = byState[programState] || 'Licensed clinical professional';
-      return programState ? `${base} (${programState} license required)` : base;
+      const associate = {
+        'California': 'ASW, AMFT, or APCC',
+        'Oregon':     'CSWA or LPC Associate',
+        'Washington': 'LSWAIC, LMFTA, or LMHCA',
+        'Arizona':    'LAC or LCSW Associate',
+        'Nebraska':   'PLMHP or CMSW',
+      };
+      const lic = licensed[programState]  || 'Licensed clinician';
+      const asc = associate[programState] || 'Associate-level clinician';
+      return programState
+        ? `Licensed: ${lic} — or associate-level: ${asc}`
+        : 'Licensed or associate-level clinician';
     }
     return null;
   }
@@ -2305,7 +2315,7 @@ PROGRAM
 
 PROVIDER REQUIREMENTS
   License type:      ${licenseType}
-  Medicare/P10:      ${fmt(d.medicareRequired)}
+  Medicare PTAN:     ${fmt(d.medicareRequired)}
   Credentialing:     ${d.credentialingRequired ? 'YES — ' + d.programCounty : 'Not required'}
   Background check:  ${d.clearanceRequired ? d.clearanceRequired + ' clearance required' : 'Not required'}
 
