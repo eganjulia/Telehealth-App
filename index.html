@@ -2104,10 +2104,7 @@
         : 'Psychiatric Mental Health Nurse Practitioner (PMHNP)';
     }
     if (serviceType === 'Nursing') {
-      const needsLVN = ['Skilled nursing', 'Subacute'].includes(programType);
-      return needsLVN
-        ? 'Registered Nurse (RN) or Licensed Vocational Nurse (LVN)'
-        : 'Registered Nurse (RN)';
+      return 'Registered Nurse (RN)';
     }
     if (serviceType === 'Clinician') {
       const licensed = {
@@ -2235,7 +2232,7 @@
     updateHoursDisplay();
   }
 
-  // Determines whether to show auto-calculated or manual hours entry
+  // Shows the appropriate hours entry block based on service type
   function updateHoursDisplay() {
     const isPsych      = formData.serviceType === 'Psychiatry';
     const autoBlock    = document.getElementById('s9-hours-auto-block');
@@ -2243,31 +2240,18 @@
     const noteEl       = document.getElementById('hoursGuidanceNote');
     const labelEl      = document.getElementById('hoursManualLabel');
 
+    // Auto-calc block is never used — always show manual entry
+    autoBlock.style.display   = 'none';
+
+    manualBlock.style.display = 'block';
     if (isPsych) {
-      autoBlock.style.display   = 'none';
-      manualBlock.style.display = 'block';
       labelEl.innerHTML = 'How many hours do you need? <span style="font-weight:400;color:#718096;">(optional)</span>';
       noteEl.style.display = 'none';
       return;
     }
 
-    // Clinician / Nursing: auto-calc when named shift + specific days selected
-    const specificDays = formData.coverageDays.filter(d => d !== 'Flexible');
-    const isShiftBased = formData.shift && formData.shift !== 'Flexible';
-    const useAutoCalc  = isShiftBased && specificDays.length > 0;
-
-    if (useAutoCalc) {
-      const total = specificDays.length * 8;
-      formData.hoursPerWeek = String(total);
-      document.getElementById('hoursAutoDisplay').textContent =
-        `${specificDays.length} day${specificDays.length !== 1 ? 's' : ''} \u00d7 8 hours = ${total} hours/week`;
-      autoBlock.style.display   = 'block';
-      manualBlock.style.display = 'none';
-    } else {
-      autoBlock.style.display   = 'none';
-      manualBlock.style.display = 'block';
-      if (labelEl) labelEl.innerHTML = 'How many hours per week do you need this service?<span class="required-asterisk">*</span>';
-    }
+    // Clinician / Nursing: manual entry, always shown
+    if (labelEl) labelEl.innerHTML = 'How many hours per week do you need this service?<span class="required-asterisk">*</span>';
     noteEl.style.display = formData.serviceType ? 'block' : 'none';
   }
 
