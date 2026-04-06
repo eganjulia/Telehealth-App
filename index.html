@@ -500,6 +500,26 @@
     .confirm-row:last-child { margin-bottom: 0; }
     .confirm-row span:first-child { color: #718096; flex-shrink: 0; }
     .confirm-row span:last-child  { font-weight: 600; text-align: right; }
+    .cs-services-list {
+      list-style: none;
+      padding: 3px 0 5px 0;
+      margin: -2px 0 0 0;
+      text-align: right;
+    }
+    .cs-services-list li {
+      font-size: 0.78rem;
+      font-weight: 400;
+      color: #4a5568;
+      line-height: 1.5;
+    }
+    .cs-services-list li::before { content: '— '; color: #a0aec0; }
+    .helper-text {
+      font-size: 0.8rem;
+      color: #718096;
+      margin-top: 8px;
+      line-height: 1.5;
+      font-style: italic;
+    }
 
     .confirm-flags {
       display: flex;
@@ -1007,10 +1027,30 @@
   <div class="section" id="section-8">
     <div class="section-label">Section 8 — Provider Requirements</div>
 
-    <!-- License type (auto-populated) -->
-    <div class="question-block">
+    <!-- License type (auto-populated) — hidden for Psychiatry -->
+    <div class="question-block" id="license-display-block">
       <div class="question-text">What license type is required for this role?</div>
       <div class="display-field" id="licenseTypeDisplay">—</div>
+    </div>
+
+    <!-- Psychiatry: user selects MD vs PMHNP -->
+    <div class="question-block" id="psych-license-block" style="display:none;">
+      <div class="question-text">What license type is required for this role?<span class="required-asterisk">*</span></div>
+      <div class="radio-options" id="psych-license-options">
+        <div class="radio-option selected" data-value="PMHNP">
+          <input type="radio" name="psychiatryLicenseType" id="psych-license-pmhnp" value="PMHNP" checked />
+          <label for="psych-license-pmhnp">Psychiatric Mental Health Nurse Practitioner (PMHNP)</label>
+        </div>
+        <div class="radio-option" data-value="MD">
+          <input type="radio" name="psychiatryLicenseType" id="psych-license-md" value="MD" />
+          <label for="psych-license-md">MD (Psychiatrist)</label>
+        </div>
+      </div>
+      <div class="helper-text">MD (psychiatrist) availability is more limited. Please select this option only if your program specifically requires an MD. Otherwise, selecting PMHNP may allow for faster placement.</div>
+      <div class="sub-field" id="md-reason-field">
+        <label for="mdReason">Please briefly describe why an MD is required for this request</label>
+        <input type="text" class="text-input" id="mdReason" placeholder="e.g., specific prescribing requirements, program regulations…" />
+      </div>
     </div>
 
     <!-- County credentialing (conditional auto-populated) -->
@@ -1328,7 +1368,12 @@
     <div class="confirm-summary">
       <h3>Request Summary</h3>
       <div class="confirm-row"><span>Program</span><span id="cs-program">—</span></div>
+      <div class="confirm-row"><span>Program type</span><span id="cs-program-type">—</span></div>
       <div class="confirm-row"><span>Service</span><span id="cs-service">—</span></div>
+      <div class="confirm-row" id="cs-services-detail-row" style="display:none;">
+        <span>Selected services</span>
+        <ul class="cs-services-list" id="cs-services-list"></ul>
+      </div>
       <div class="confirm-row"><span>Priority</span><span id="cs-priority">—</span></div>
       <div class="confirm-row"><span>Requested start</span><span id="cs-start">—</span></div>
       <div class="confirm-row"><span>Coverage</span><span id="cs-coverage">—</span></div>
@@ -1372,6 +1417,8 @@
     specificServices:     [],   // selected service checkboxes
     preferredProvider:    '',
     // Section 8
+    psychiatryLicenseType: 'PMHNP', // 'PMHNP' | 'MD' — Psychiatry only
+    mdReason:             '',        // why MD is specifically required
     medicareRequired:     null,
     // Section 9
     coverageDays:         [],   // array of selected days (or ['Flexible'])
@@ -2052,7 +2099,9 @@
     if (!serviceType) return null;
 
     if (serviceType === 'Psychiatry') {
-      return 'MD, DO, or Psychiatric Mental Health Nurse Practitioner (PMHNP)';
+      return formData.psychiatryLicenseType === 'MD'
+        ? 'MD (Psychiatrist)'
+        : 'Psychiatric Mental Health Nurse Practitioner (PMHNP)';
     }
     if (serviceType === 'Nursing') {
       const needsLVN = ['Skilled nursing', 'Subacute'].includes(programType);
@@ -2085,15 +2134,35 @@
   }
 
   function buildSection8() {
-    // License type
-    const licenseType = deriveLicenseType();
-    const licenseEl = document.getElementById('licenseTypeDisplay');
-    if (licenseType) {
-      licenseEl.textContent = licenseType;
-      licenseEl.className = 'display-field';
+    const isPsych = formData.serviceType === 'Psychiatry';
+
+    // For Psychiatry: show interactive license selector; for others: show auto-populated display
+    document.getElementById('license-display-block').style.display = isPsych ? 'none' : 'block';
+    document.getElementById('psych-license-block').style.display   = isPsych ? 'block' : 'none';
+
+    if (isPsych) {
+      // Ensure a default is set
+      if (!formData.psychiatryLicenseType) formData.psychiatryLicenseType = 'PMHNP';
+      // Sync radio UI to current formData value
+      document.querySelectorAll('#psych-license-options .radio-option').forEach(opt => {
+        const match = opt.dataset.value === formData.psychiatryLicenseType;
+        opt.classList.toggle('selected', match);
+        opt.querySelector('input').checked = match;
+      });
+      // Show/hide MD reason field
+      const isMD = formData.psychiatryLicenseType === 'MD';
+      document.getElementById('md-reason-field').classList.toggle('visible', isMD);
     } else {
-      licenseEl.textContent = 'Not determined';
-      licenseEl.className = 'display-field not-required';
+      // License type auto-populate for Nursing / Clinician
+      const licenseType = deriveLicenseType();
+      const licenseEl = document.getElementById('licenseTypeDisplay');
+      if (licenseType) {
+        licenseEl.textContent = licenseType;
+        licenseEl.className = 'display-field';
+      } else {
+        licenseEl.textContent = 'Not determined';
+        licenseEl.className = 'display-field not-required';
+      }
     }
 
     // County credentialing
@@ -2127,6 +2196,19 @@
 
   initRadioGroup('medicare-options', 'medicareRequired', () => {
     showError('medicare-error', false);
+  });
+
+  initRadioGroup('psych-license-options', 'psychiatryLicenseType', value => {
+    const isMD = value === 'MD';
+    document.getElementById('md-reason-field').classList.toggle('visible', isMD);
+    if (!isMD) {
+      formData.mdReason = '';
+      document.getElementById('mdReason').value = '';
+    }
+  });
+
+  document.getElementById('mdReason').addEventListener('input', e => {
+    formData.mdReason = e.target.value;
   });
 
   // ─── Wire up Section 9 ───────────────────────────────────
@@ -2403,7 +2485,7 @@ PROGRAM
   Telehealth exp:    ${fmt(d.telehealthExp)}
 
 PROVIDER REQUIREMENTS
-  License type:      ${licenseType}
+  License type:      ${licenseType}${d.mdReason ? '\n  MD reason:         ' + d.mdReason : ''}
   Medicare PTAN:     ${fmt(d.medicareRequired)}
   Credentialing:     ${d.credentialingRequired ? 'YES — ' + d.programCounty : 'Not required'}
   Background check:  ${d.clearanceRequired || 'No specific clearance required'}
@@ -2483,12 +2565,35 @@ Questions? Reply to this email or contact your telehealth coordinator directly.
     // Populate summary rows
     document.getElementById('cs-program').textContent =
       `${d.programName}${d.programNumber ? ' (' + d.programNumber + ')' : ''}`;
+    document.getElementById('cs-program-type').textContent = fmt(d.programType) || '—';
+
     document.getElementById('cs-service').textContent =
       d.serviceModel ? `${d.serviceType} — ${d.serviceModel}` : d.serviceType;
+
+    // Specific services list
+    const servicesDetailRow = document.getElementById('cs-services-detail-row');
+    const servicesList = document.getElementById('cs-services-list');
+    if (d.specificServices && d.specificServices.length > 0) {
+      servicesList.innerHTML = d.specificServices.map(s => `<li>${s}</li>`).join('');
+      servicesDetailRow.style.display = 'flex';
+    } else {
+      servicesDetailRow.style.display = 'none';
+    }
+
     document.getElementById('cs-priority').textContent = fmt(d.priority);
     document.getElementById('cs-start').textContent    = fmt(d.startDate);
-    document.getElementById('cs-coverage').textContent =
-      `${fmtArr(d.coverageDays)} · ${fmt(d.shift)} · ${fmt(d.hoursPerWeek)} hrs/wk`;
+
+    // Coverage: Psychiatry shows dates, others show days + shift + hours
+    let coverageText;
+    if (d.serviceType === 'Psychiatry') {
+      coverageText = d.psychiatryDates
+        ? `${d.psychiatryDates} · ${fmt(d.hoursPerWeek) || '—'} hrs`
+        : `${fmt(d.shift)} · ${fmt(d.hoursPerWeek) || '—'} hrs`;
+    } else {
+      coverageText = `${fmtArr(d.coverageDays)} · ${fmt(d.shift)} · ${fmt(d.hoursPerWeek)} hrs/wk`;
+    }
+    document.getElementById('cs-coverage').textContent = coverageText;
+
     document.getElementById('cs-contact').textContent  =
       `${d.primaryName} (${d.primaryEmail})`;
 
@@ -2529,6 +2634,8 @@ Questions? Reply to this email or contact your telehealth coordinator directly.
     formData.primaryPhone = formData.coordinatorName = formData.coordinatorEmail = '';
     formData.coordinatorPhone = formData.psychiatryDates = formData.hoursPerWeek = '';
     formData.startDate = '';
+    formData.psychiatryLicenseType = 'PMHNP';
+    formData.mdReason = '';
     currentSection = 1;
     Object.keys(sectionSubSteps).forEach(k => { sectionSubSteps[k] = 1; });
 
@@ -2546,6 +2653,12 @@ Questions? Reply to this email or contact your telehealth coordinator directly.
     document.getElementById('q2-block').style.display = 'none';
     document.getElementById('vacant-roles-field').classList.remove('visible');
     document.getElementById('other-reason-field').classList.remove('visible');
+    // Section 8: restore to default state (auto-populate display, hide psych selector)
+    document.getElementById('license-display-block').style.display = 'block';
+    document.getElementById('psych-license-block').style.display   = 'none';
+    document.getElementById('md-reason-field').classList.remove('visible');
+    // Confirmation: hide specific services row
+    document.getElementById('cs-services-detail-row').style.display = 'none';
     // Section 9 blocks — reset to default hidden state
     const datesBlock = document.getElementById('s9-dates-block');
     const daysBlock  = document.getElementById('s9-days-block');
