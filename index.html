@@ -1339,7 +1339,7 @@
     programCounty:        '',
     credentialingRequired: false, // backend flag
     programType:          '',
-    clearanceRequired:    null,   // 'CCL' | 'DHCS' | null
+    clearanceRequired:    null,   // full clearance string | null
     // Section 6
     primaryName:          '',
     primaryEmail:         '',
@@ -1384,15 +1384,43 @@
     'sonoma', 'riverside', 'ventura', 'orange'
   ]);
 
-  const CCL_TYPES = new Set([
+  // Background clearance rule engine (priority: OR > WA > CA program type > other)
+  const CA_DHCS_TYPES = new Set([
+    'Psychiatric health facility',
+    'Mental health rehabilitation center',
+    'Subacute',
+    'Evaluation and treatment center',   // closest to "Acute" in the dropdown
+  ]);
+  const CA_CCL_TYPES = new Set([
     'Crisis residential program',
-    'Enhanced behavioral support program'
+    'Enhanced behavioral support program',
   ]);
 
-  const DHCS_TYPES = new Set([
-    'Psychiatric health facility',
-    'Mental health rehabilitation center'
-  ]);
+  function deriveClearance(state, programType) {
+    if (state === 'Oregon')     return 'Oregon ORCHARDS Clearance Required';
+    if (state === 'Washington') return 'Washington WATCH Clearance Required';
+    if (state === 'California') {
+      if (CA_DHCS_TYPES.has(programType)) return 'DHCS Clearance Required';
+      if (CA_CCL_TYPES.has(programType))  return 'CCL Clearance Required';
+    }
+    return 'No specific clearance required';
+  }
+
+  function applyClearance() {
+    const result = deriveClearance(formData.programState, formData.programType);
+    formData.clearanceRequired = result;
+
+    const banner     = document.getElementById('clearance-banner');
+    const bannerText = document.getElementById('clearance-banner-text');
+    const isRequired = result !== 'No specific clearance required';
+
+    if (isRequired) {
+      bannerText.innerHTML = `<strong>${result}</strong>Background clearance will be coordinated before services begin.`;
+      banner.classList.add('visible');
+    } else {
+      banner.classList.remove('visible');
+    }
+  }
 
   // ─── Progress ────────────────────────────────────────────
   function renderProgress(sectionNum) {
@@ -1768,10 +1796,11 @@
     if (formData.programNumber.trim()) showError('programNumber-error', false);
   });
 
-  // 5-3: State
+  // 5-3: State — also recomputes clearance since state-level rules take priority
   document.getElementById('programState').addEventListener('change', e => {
     formData.programState = e.target.value;
     if (formData.programState) showError('programState-error', false);
+    applyClearance();
   });
 
   // 5-4: County — with credentialing flag logic
@@ -1786,32 +1815,11 @@
     document.getElementById('credentialing-banner').classList.toggle('visible', flagged);
   });
 
-  // 5-5: Program type — with CCL / DHCS clearance flag logic
+  // 5-5: Program type — recompute clearance using full state+type rule engine
   document.getElementById('programType').addEventListener('change', e => {
     formData.programType = e.target.value;
     if (formData.programType) showError('programType-error', false);
-
-    const banner = document.getElementById('clearance-banner');
-    const bannerText = document.getElementById('clearance-banner-text');
-
-    if (CCL_TYPES.has(formData.programType)) {
-      formData.clearanceRequired = 'CCL';
-      bannerText.innerHTML =
-        '<strong>Community Care Licensing (CCL) clearance required</strong>' +
-        'This program type requires CCL clearance before services can begin. ' +
-        'The telehealth coordinator will follow up with clearance details.';
-      banner.classList.add('visible');
-    } else if (DHCS_TYPES.has(formData.programType)) {
-      formData.clearanceRequired = 'DHCS';
-      bannerText.innerHTML =
-        '<strong>DHCS clearance required</strong>' +
-        'This program type requires Department of Health Care Services (DHCS) clearance ' +
-        'before services can begin. The telehealth coordinator will follow up.';
-      banner.classList.add('visible');
-    } else {
-      formData.clearanceRequired = null;
-      banner.classList.remove('visible');
-    }
+    applyClearance();
   });
 
   // ─── Wire up Section 6 ───────────────────────────────────
@@ -2053,18 +2061,13 @@
       credBlock.style.display = 'block'; // always show the row; value indicates status
     }
 
-    // Background clearance
+    // Background clearance — always recompute when entering Section 8
+    applyClearance();
     const clearEl = document.getElementById('clearanceDisplay');
-    if (formData.clearanceRequired === 'CCL') {
-      clearEl.textContent = 'Yes — Community Care Licensing (CCL) clearance required';
-      clearEl.className   = 'display-field';
-    } else if (formData.clearanceRequired === 'DHCS') {
-      clearEl.textContent = 'Yes — DHCS (Department of Health Care Services) clearance required';
-      clearEl.className   = 'display-field';
-    } else {
-      clearEl.textContent = 'Not required';
-      clearEl.className   = 'display-field not-required';
-    }
+    const isRequired = formData.clearanceRequired !== 'No specific clearance required'
+                    && formData.clearanceRequired !== null;
+    clearEl.textContent = formData.clearanceRequired || 'No specific clearance required';
+    clearEl.className   = isRequired ? 'display-field' : 'display-field not-required';
 
     // Re-apply saved Medicare/P10 selection if user is revisiting
     document.querySelectorAll('#medicare-options .radio-option').forEach(opt => {
@@ -2283,8 +2286,8 @@
 
     const flags = [];
     if (d.credentialingRequired) flags.push(`⚠ Credentialing required — ${d.programCounty}`);
-    if (d.clearanceRequired === 'CCL')  flags.push('⚠ Community Care Licensing (CCL) clearance required');
-    if (d.clearanceRequired === 'DHCS') flags.push('⚠ DHCS clearance required');
+    const clearanceIsRequired = d.clearanceRequired && d.clearanceRequired !== 'No specific clearance required';
+    if (clearanceIsRequired) flags.push(`⚠ ${d.clearanceRequired}`);
 
     return `NEW TELEHEALTH SERVICE REQUEST
 ${'='.repeat(40)}
@@ -2317,7 +2320,7 @@ PROVIDER REQUIREMENTS
   License type:      ${licenseType}
   Medicare PTAN:     ${fmt(d.medicareRequired)}
   Credentialing:     ${d.credentialingRequired ? 'YES — ' + d.programCounty : 'Not required'}
-  Background check:  ${d.clearanceRequired ? d.clearanceRequired + ' clearance required' : 'Not required'}
+  Background check:  ${d.clearanceRequired || 'No specific clearance required'}
 
 ${flags.length ? 'FLAGS\n  ' + flags.join('\n  ') + '\n\n' : ''}CONTACTS
   Primary contact:   ${fmt(d.primaryName)} | ${fmt(d.primaryEmail)} | ${fmt(d.primaryPhone)}
@@ -2410,11 +2413,9 @@ Questions? Reply to this email or contact your telehealth coordinator directly.
     if (d.credentialingRequired) {
       flagsEl.innerHTML += `<div class="confirm-flag">${warnSvg} <span><strong>Credentialing required</strong> — ${d.programCounty} county</span></div>`;
     }
-    if (d.clearanceRequired === 'CCL') {
-      flagsEl.innerHTML += `<div class="confirm-flag">${warnSvg} <span><strong>CCL clearance required</strong> — Community Care Licensing</span></div>`;
-    }
-    if (d.clearanceRequired === 'DHCS') {
-      flagsEl.innerHTML += `<div class="confirm-flag">${warnSvg} <span><strong>DHCS clearance required</strong> — Dept. of Health Care Services</span></div>`;
+    const clearanceActive = d.clearanceRequired && d.clearanceRequired !== 'No specific clearance required';
+    if (clearanceActive) {
+      flagsEl.innerHTML += `<div class="confirm-flag">${warnSvg} <span><strong>Background clearance required</strong> — ${d.clearanceRequired}</span></div>`;
     }
 
     // Update subtitle with requestor email
