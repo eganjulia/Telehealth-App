@@ -639,6 +639,10 @@
           <input type="checkbox" name="reasons" id="reason-expand" value="Program expanding or new program opening" />
           <label for="reason-expand">Program expanding or new program opening</label>
         </div>
+        <div class="checkbox-option" data-value="Other">
+          <input type="checkbox" name="reasons" id="reason-other" value="Other" />
+          <label for="reason-other">Other</label>
+        </div>
       </div>
       <div class="field-error" id="q3-error">Please select at least one reason.</div>
 
@@ -646,6 +650,12 @@
       <div class="sub-field" id="vacant-roles-field">
         <label for="vacantRoles">Which role(s)?</label>
         <input type="text" id="vacantRoles" placeholder="e.g., RN, Case Manager, Psychiatrist" />
+      </div>
+
+      <!-- Conditional: other reason write-in -->
+      <div class="sub-field" id="other-reason-field">
+        <label for="otherReason">Please describe</label>
+        <input type="text" id="otherReason" placeholder="Describe your reason for requesting this service" />
       </div>
     </div>
 
@@ -1049,8 +1059,19 @@
   <div class="section" id="section-9">
     <div class="section-label">Section 9 — Schedule Details</div>
 
-    <!-- Days of week -->
-    <div class="question-block">
+    <!-- PSYCHIATRY MODE: specific date(s) -->
+    <div class="question-block" id="s9-dates-block" style="display:none;">
+      <div class="question-text">
+        What specific date(s) do you need coverage?<span class="required-asterisk">*</span>
+      </div>
+      <input type="text" class="text-input" id="psychiatryDates"
+             placeholder="e.g., April 15, April 22" autocomplete="off" />
+      <p class="form-note" style="margin-top:10px;">Enter one or more dates. Separate multiple dates with commas.</p>
+      <div class="field-error" id="psychiatryDates-error">Please enter at least one date.</div>
+    </div>
+
+    <!-- CLINICIAN / NURSING MODE: recurring days of week -->
+    <div class="question-block" id="s9-days-block">
       <div class="question-text">
         Which days of the week do you need coverage?<span class="required-asterisk">*</span>
       </div>
@@ -1089,21 +1110,14 @@
         </div>
       </div>
       <div class="field-error" id="days-error">Please select at least one day or choose Flexible.</div>
-
-      <!-- Psychiatry-only: exact dates field -->
-      <div class="sub-field" id="psychiatryDatesField">
-        <label for="psychiatryDates">Please specify the exact dates you need coverage</label>
-        <input type="text" id="psychiatryDates"
-               placeholder="e.g., next Tuesday and next Thursday" />
-      </div>
     </div>
 
     <hr class="section-divider" />
 
-    <!-- Coverage times -->
+    <!-- Time of day (all service types) -->
     <div class="question-block">
       <div class="question-text">
-        What times do you need coverage?<span class="required-asterisk">*</span>
+        What time of day do you need coverage?<span class="required-asterisk">*</span>
       </div>
       <div class="radio-options" id="shift-options">
         <div class="radio-option" data-value="Business hours (8:30 AM to 5 PM)">
@@ -1128,8 +1142,6 @@
         </div>
       </div>
       <div class="field-error" id="shift-error">Please select a coverage time.</div>
-
-      <!-- Leadership-only note -->
       <p class="form-note" id="leadershipShiftNote" style="display:none;">
         Leadership services are provided during business hours only. We do not provide on-call or after-hours support.
       </p>
@@ -1137,16 +1149,24 @@
 
     <hr class="section-divider" />
 
-    <!-- Hours per week -->
-    <div class="question-block">
-      <div class="question-text">
+    <!-- Hours: auto-calculated (Clinician/Nursing + named shift + specific days) -->
+    <div class="question-block" id="s9-hours-auto-block" style="display:none;">
+      <div class="question-text">Estimated hours per week</div>
+      <div class="display-field" id="hoursAutoDisplay">—</div>
+    </div>
+
+    <!-- Hours: manual entry (Flexible shift, or Psychiatry, or Flexible days) -->
+    <div class="question-block" id="s9-hours-manual-block" style="display:none;">
+      <div class="question-text" id="hoursManualLabel">
         How many hours per week do you need this service?<span class="required-asterisk">*</span>
       </div>
       <input type="number" class="number-input" id="hoursPerWeek"
              min="1" max="168" placeholder="e.g., 20" />
       <div class="field-error" id="hours-error">Please enter a number of hours greater than 0.</div>
-      <p class="form-note" id="hoursGuidanceNote" style="display:none;"></p>
     </div>
+
+    <!-- Guidance note (shared, shown when hours block is visible) -->
+    <p class="form-note" id="hoursGuidanceNote" style="display:none;"></p>
 
     <div class="nav">
       <button class="btn btn-ghost" onclick="goToSection(8)">← Back</button>
@@ -1329,6 +1349,7 @@
     serviceModel:         null,   // Q2 (clinician only)
     reasons:              [],     // Q3
     vacantRoles:          '',     // Q3 sub-field
+    otherReason:          '',     // Q3 other write-in
     startDate:            '',     // Q4
     priority:             null,   // Q5
     telehealthExp:        null,   // Q6
@@ -1567,25 +1588,47 @@
     }
 
     if (num === 9) {
-      if (formData.coverageDays.length === 0) {
-        showError('days-error', true);
-        valid = false;
+      const isPsych = formData.serviceType === 'Psychiatry';
+
+      if (isPsych) {
+        if (!formData.psychiatryDates || !formData.psychiatryDates.trim()) {
+          showError('psychiatryDates-error', true);
+          valid = false;
+        } else {
+          showError('psychiatryDates-error', false);
+        }
       } else {
-        showError('days-error', false);
+        if (formData.coverageDays.length === 0) {
+          showError('days-error', true);
+          valid = false;
+        } else {
+          showError('days-error', false);
+        }
       }
+
       if (!formData.shift) {
         showError('shift-error', true);
         valid = false;
       } else {
         showError('shift-error', false);
       }
-      const hrs = Number(formData.hoursPerWeek);
-      if (!formData.hoursPerWeek || isNaN(hrs) || hrs < 1) {
-        showError('hours-error', true);
-        valid = false;
-      } else {
-        showError('hours-error', false);
+
+      if (!isPsych) {
+        const specificDays = formData.coverageDays.filter(d => d !== 'Flexible');
+        const isShiftBased = formData.shift && formData.shift !== 'Flexible';
+        const useAutoCalc  = isShiftBased && specificDays.length > 0;
+        if (!useAutoCalc) {
+          const hrs = Number(formData.hoursPerWeek);
+          if (!formData.hoursPerWeek || isNaN(hrs) || hrs < 1) {
+            showError('hours-error', true);
+            valid = false;
+          } else {
+            showError('hours-error', false);
+          }
+        }
+        // Auto-calc path: hours already set in formData, no validation needed
       }
+      // Psychiatry hours are optional — no validation
     }
 
     if (num === 10) {
@@ -1752,17 +1795,22 @@
   // ─── Wire up Section 2 ───────────────────────────────────
   initCheckboxGroup('q3-options', 'reasons', values => {
     showError('q3-error', false);
-    const vacantField = document.getElementById('vacant-roles-field');
+
     const isVacant = values.includes('Vacant role(s)');
-    vacantField.classList.toggle('visible', isVacant);
-    if (!isVacant) {
-      formData.vacantRoles = '';
-      document.getElementById('vacantRoles').value = '';
-    }
+    document.getElementById('vacant-roles-field').classList.toggle('visible', isVacant);
+    if (!isVacant) { formData.vacantRoles = ''; document.getElementById('vacantRoles').value = ''; }
+
+    const isOther = values.includes('Other');
+    document.getElementById('other-reason-field').classList.toggle('visible', isOther);
+    if (!isOther) { formData.otherReason = ''; document.getElementById('otherReason').value = ''; }
   });
 
   document.getElementById('vacantRoles').addEventListener('input', e => {
     formData.vacantRoles = e.target.value;
+  });
+
+  document.getElementById('otherReason').addEventListener('input', e => {
+    formData.otherReason = e.target.value;
   });
 
   // ─── Wire up Section 3 ───────────────────────────────────
@@ -2084,25 +2132,61 @@
   // ─── Wire up Section 9 ───────────────────────────────────
 
   function buildSection9() {
-    // Show Psychiatry exact-dates field
-    const isPsych = formData.serviceType === 'Psychiatry';
-    document.getElementById('psychiatryDatesField').classList.toggle('visible', isPsych);
-
-    // Show Leadership shift note
+    const isPsych      = formData.serviceType === 'Psychiatry';
     const isLeadership = formData.serviceModel === 'Leadership';
+
+    // Switch between psychiatry (dates) and clinician/nursing (days of week)
+    document.getElementById('s9-dates-block').style.display = isPsych ? 'block' : 'none';
+    document.getElementById('s9-days-block').style.display  = isPsych ? 'none'  : 'block';
+
+    // Leadership shift note
     document.getElementById('leadershipShiftNote').style.display = isLeadership ? 'block' : 'none';
 
-    // Guidance note for hours
+    // Guidance note text
     const noteEl = document.getElementById('hoursGuidanceNote');
     if (isLeadership) {
       noteEl.textContent = 'Please consider: the number of staff requiring supervision, number of meetings per week, and volume of other administrative tasks. We\'ll refine this estimate during our introductory meeting.';
-      noteEl.style.display = 'block';
     } else if (formData.serviceType) {
       noteEl.textContent = 'Please consider: the number of clients being served per week and the specific service being requested in terms of time it takes. Our direct care telehealth providers are expected to provide direct care services for sixty-five percent of their time, with the remaining thirty-five percent used for team meetings, documentation, and other non-billable work. We\'ll refine this estimate during our introductory meeting.';
-      noteEl.style.display = 'block';
-    } else {
-      noteEl.style.display = 'none';
     }
+
+    updateHoursDisplay();
+  }
+
+  // Determines whether to show auto-calculated or manual hours entry
+  function updateHoursDisplay() {
+    const isPsych      = formData.serviceType === 'Psychiatry';
+    const autoBlock    = document.getElementById('s9-hours-auto-block');
+    const manualBlock  = document.getElementById('s9-hours-manual-block');
+    const noteEl       = document.getElementById('hoursGuidanceNote');
+    const labelEl      = document.getElementById('hoursManualLabel');
+
+    if (isPsych) {
+      autoBlock.style.display   = 'none';
+      manualBlock.style.display = 'block';
+      labelEl.innerHTML = 'How many hours do you need? <span style="font-weight:400;color:#718096;">(optional)</span>';
+      noteEl.style.display = 'none';
+      return;
+    }
+
+    // Clinician / Nursing: auto-calc when named shift + specific days selected
+    const specificDays = formData.coverageDays.filter(d => d !== 'Flexible');
+    const isShiftBased = formData.shift && formData.shift !== 'Flexible';
+    const useAutoCalc  = isShiftBased && specificDays.length > 0;
+
+    if (useAutoCalc) {
+      const total = specificDays.length * 8;
+      formData.hoursPerWeek = String(total);
+      document.getElementById('hoursAutoDisplay').textContent =
+        `${specificDays.length} day${specificDays.length !== 1 ? 's' : ''} \u00d7 8 hours = ${total} hours/week`;
+      autoBlock.style.display   = 'block';
+      manualBlock.style.display = 'none';
+    } else {
+      autoBlock.style.display   = 'none';
+      manualBlock.style.display = 'block';
+      if (labelEl) labelEl.innerHTML = 'How many hours per week do you need this service?<span class="required-asterisk">*</span>';
+    }
+    noteEl.style.display = formData.serviceType ? 'block' : 'none';
   }
 
   // Days of week — Flexible is mutually exclusive with specific days
@@ -2118,6 +2202,7 @@
         container.querySelectorAll('input[type="checkbox"]:checked')
       ).map(cb => cb.value);
       if (formData.coverageDays.length > 0) showError('days-error', false);
+      updateHoursDisplay();
     }
 
     // Specific day clicked → uncheck Flexible
@@ -2158,6 +2243,7 @@
 
   initRadioGroup('shift-options', 'shift', () => {
     showError('shift-error', false);
+    updateHoursDisplay();
   });
 
   document.getElementById('psychiatryDates').addEventListener('input', e => {
@@ -2299,7 +2385,7 @@ SERVICE
   Preferred provider:${fmt(d.preferredProvider)}
 
 REASON FOR REQUEST
-  ${fmtArr(d.reasons)}${d.vacantRoles ? '\n  Vacant roles: ' + d.vacantRoles : ''}
+  ${fmtArr(d.reasons)}${d.vacantRoles ? '\n  Vacant roles: ' + d.vacantRoles : ''}${d.otherReason ? '\n  Other detail: ' + d.otherReason : ''}
 
 TIMING
   Start date:        ${fmt(d.startDate)}
@@ -2459,7 +2545,20 @@ Questions? Reply to this email or contact your telehealth coordinator directly.
     document.querySelectorAll('.warn-banner, .info-banner').forEach(el => el.classList.remove('visible'));
     document.getElementById('q2-block').style.display = 'none';
     document.getElementById('vacant-roles-field').classList.remove('visible');
-    document.getElementById('psychiatryDatesField').classList.remove('visible');
+    document.getElementById('other-reason-field').classList.remove('visible');
+    // Section 9 blocks — reset to default hidden state
+    const datesBlock = document.getElementById('s9-dates-block');
+    const daysBlock  = document.getElementById('s9-days-block');
+    const autoBlock  = document.getElementById('s9-hours-auto-block');
+    const manualBlock = document.getElementById('s9-hours-manual-block');
+    const hoursNote  = document.getElementById('hoursGuidanceNote');
+    if (datesBlock)  datesBlock.style.display  = 'none';
+    if (daysBlock)   daysBlock.style.display   = 'none';
+    if (autoBlock)   autoBlock.style.display   = 'none';
+    if (manualBlock) manualBlock.style.display = 'none';
+    if (hoursNote)   hoursNote.style.display   = 'none';
+    const autoDisplay = document.getElementById('hoursAutoDisplay');
+    if (autoDisplay) autoDisplay.textContent = '—';
 
     // Reset EHR checkboxes (rebuilt fresh next time section 10 is entered)
     document.getElementById('ehr-primary-options').innerHTML = '';
