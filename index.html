@@ -521,6 +521,84 @@
       font-style: italic;
     }
 
+    /* ── Calendar widget ── */
+    .calendar-widget {
+      border: 2px solid #e2e8f0;
+      border-radius: 10px;
+      overflow: hidden;
+      margin-top: 12px;
+      user-select: none;
+    }
+    .calendar-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 10px 14px;
+      background: #f7fafc;
+      border-bottom: 1px solid #e2e8f0;
+    }
+    .calendar-month-label {
+      font-weight: 600;
+      font-size: 0.9rem;
+      color: #2d3748;
+    }
+    .cal-nav-btn {
+      background: none;
+      border: 1px solid #e2e8f0;
+      border-radius: 6px;
+      font-size: 1rem;
+      cursor: pointer;
+      color: #4a5568;
+      padding: 2px 10px;
+      line-height: 1.4;
+    }
+    .cal-nav-btn:hover { background: #edf2f7; }
+    .calendar-grid {
+      display: grid;
+      grid-template-columns: repeat(7, 1fr);
+      padding: 6px 8px 10px;
+      gap: 2px;
+    }
+    .cal-day-hdr {
+      text-align: center;
+      font-size: 0.68rem;
+      font-weight: 700;
+      color: #a0aec0;
+      padding: 4px 0;
+      letter-spacing: 0.04em;
+    }
+    .cal-day {
+      text-align: center;
+      padding: 7px 2px;
+      font-size: 0.83rem;
+      cursor: pointer;
+      color: #2d3748;
+      border-radius: 6px;
+      transition: background 0.1s;
+    }
+    .cal-day:hover:not(.cal-empty) { background: #ebf8ff; color: #2b6cb0; }
+    .cal-day.cal-selected { background: #3b82f6; color: #fff; font-weight: 600; }
+    .cal-day.cal-selected:hover { background: #2563eb; }
+    .cal-day.cal-empty { cursor: default; }
+    .selected-dates-chips {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+      margin-top: 10px;
+      min-height: 26px;
+    }
+    .date-chip {
+      background: #ebf8ff;
+      color: #2b6cb0;
+      padding: 3px 10px;
+      border-radius: 12px;
+      font-size: 0.78rem;
+      font-weight: 500;
+      cursor: pointer;
+    }
+    .date-chip:hover { background: #bee3f8; }
+    .date-chip-none { font-size: 0.8rem; color: #a0aec0; font-style: italic; }
+
     .confirm-flags {
       display: flex;
       flex-direction: column;
@@ -1099,18 +1177,44 @@
   <div class="section" id="section-9">
     <div class="section-label">Section 9 — Schedule Details</div>
 
-    <!-- PSYCHIATRY MODE: specific date(s) -->
+    <!-- PSYCHIATRY ONLY: coverage type selection -->
+    <div class="question-block" id="s9-coverage-type-block" style="display:none;">
+      <div class="question-text">
+        What type of coverage is needed?<span class="required-asterisk">*</span>
+      </div>
+      <div class="radio-options" id="s9-coverage-type-options">
+        <div class="radio-option" data-value="Short-term">
+          <input type="radio" name="psychiatryCoverageType" id="cov-shortterm" value="Short-term" />
+          <label for="cov-shortterm">Short-term coverage (specific dates)</label>
+        </div>
+        <div class="radio-option" data-value="Ongoing">
+          <input type="radio" name="psychiatryCoverageType" id="cov-ongoing" value="Ongoing" />
+          <label for="cov-ongoing">Ongoing coverage (recurring weekly schedule)</label>
+        </div>
+      </div>
+      <div class="field-error" id="coverage-type-error">Please select a coverage type.</div>
+    </div>
+
+    <!-- PSYCHIATRY SHORT-TERM: calendar date picker -->
     <div class="question-block" id="s9-dates-block" style="display:none;">
       <div class="question-text">
         What specific date(s) do you need coverage?<span class="required-asterisk">*</span>
       </div>
-      <input type="text" class="text-input" id="psychiatryDates"
-             placeholder="e.g., April 15, April 22" autocomplete="off" />
-      <p class="form-note" style="margin-top:10px;">Enter one or more dates. Separate multiple dates with commas.</p>
-      <div class="field-error" id="psychiatryDates-error">Please enter at least one date.</div>
+      <div class="calendar-widget" id="psych-calendar">
+        <div class="calendar-header">
+          <button type="button" class="cal-nav-btn" id="cal-prev">&#8592;</button>
+          <span class="calendar-month-label" id="cal-month-label">—</span>
+          <button type="button" class="cal-nav-btn" id="cal-next">&#8594;</button>
+        </div>
+        <div class="calendar-grid" id="cal-grid"></div>
+      </div>
+      <div class="selected-dates-chips" id="selected-dates-chips">
+        <span class="date-chip-none">No dates selected — click a date above to add it</span>
+      </div>
+      <div class="field-error" id="psychiatryDates-error">Please select at least one date.</div>
     </div>
 
-    <!-- CLINICIAN / NURSING MODE: recurring days of week -->
+    <!-- CLINICIAN / NURSING or PSYCHIATRY ONGOING: recurring days of week -->
     <div class="question-block" id="s9-days-block">
       <div class="question-text">
         Which days of the week do you need coverage?<span class="required-asterisk">*</span>
@@ -1421,8 +1525,9 @@
     mdReason:             '',        // why MD is specifically required
     medicareRequired:     null,
     // Section 9
-    coverageDays:         [],   // array of selected days (or ['Flexible'])
-    psychiatryDates:      '',   // psychiatry-only exact dates
+    psychiatryCoverageType: null,  // 'Short-term' | 'Ongoing' — Psychiatry only
+    coverageDays:         [],      // array of selected days (or ['Flexible'])
+    psychiatryDates:      [],      // array of 'YYYY-MM-DD' strings — Psychiatry short-term
     shift:                null,
     hoursPerWeek:         '',
     // Section 10
@@ -1638,13 +1743,31 @@
       const isPsych = formData.serviceType === 'Psychiatry';
 
       if (isPsych) {
-        if (!formData.psychiatryDates || !formData.psychiatryDates.trim()) {
-          showError('psychiatryDates-error', true);
+        // Must select a coverage type
+        if (!formData.psychiatryCoverageType) {
+          showError('coverage-type-error', true);
           valid = false;
         } else {
-          showError('psychiatryDates-error', false);
+          showError('coverage-type-error', false);
+          if (formData.psychiatryCoverageType === 'Short-term') {
+            if (!formData.psychiatryDates || formData.psychiatryDates.length === 0) {
+              showError('psychiatryDates-error', true);
+              valid = false;
+            } else {
+              showError('psychiatryDates-error', false);
+            }
+          } else {
+            // Ongoing: require days
+            if (formData.coverageDays.length === 0) {
+              showError('days-error', true);
+              valid = false;
+            } else {
+              showError('days-error', false);
+            }
+          }
         }
       } else {
+        // Clinician / Nursing: require days
         if (formData.coverageDays.length === 0) {
           showError('days-error', true);
           valid = false;
@@ -1660,22 +1783,31 @@
         showError('shift-error', false);
       }
 
-      if (!isPsych) {
-        const specificDays = formData.coverageDays.filter(d => d !== 'Flexible');
-        const isShiftBased = formData.shift && formData.shift !== 'Flexible';
-        const useAutoCalc  = isShiftBased && specificDays.length > 0;
-        if (!useAutoCalc) {
-          const hrs = Number(formData.hoursPerWeek);
-          if (!formData.hoursPerWeek || isNaN(hrs) || hrs < 1) {
-            showError('hours-error', true);
-            valid = false;
-          } else {
-            showError('hours-error', false);
-          }
+      // Hours validation: required unless auto-calculated
+      const isShift = SHIFT_BASED_VALUES.includes(formData.shift);
+      const autoCalcActive = (() => {
+        if (!isShift) return false;
+        if (isPsych) {
+          if (formData.psychiatryCoverageType === 'Short-term')
+            return formData.psychiatryDates.length > 0;
+          if (formData.psychiatryCoverageType === 'Ongoing')
+            return formData.coverageDays.filter(d => d !== 'Flexible').length > 0;
+          return false;
         }
-        // Auto-calc path: hours already set in formData, no validation needed
+        return false; // Clinician/Nursing: never auto-calc
+      })();
+
+      if (!autoCalcActive && !isPsych) {
+        // Clinician/Nursing hours required
+        const hrs = Number(formData.hoursPerWeek);
+        if (!formData.hoursPerWeek || isNaN(hrs) || hrs < 1) {
+          showError('hours-error', true);
+          valid = false;
+        } else {
+          showError('hours-error', false);
+        }
       }
-      // Psychiatry hours are optional — no validation
+      // Psychiatry hours: optional when not auto-calc; auto-calc sets value automatically
     }
 
     if (num === 10) {
@@ -2214,9 +2346,25 @@
     const isPsych      = formData.serviceType === 'Psychiatry';
     const isLeadership = formData.serviceModel === 'Leadership';
 
-    // Switch between psychiatry (dates) and clinician/nursing (days of week)
-    document.getElementById('s9-dates-block').style.display = isPsych ? 'block' : 'none';
-    document.getElementById('s9-days-block').style.display  = isPsych ? 'none'  : 'block';
+    // Coverage type block: Psychiatry only
+    document.getElementById('s9-coverage-type-block').style.display = isPsych ? 'block' : 'none';
+
+    if (isPsych) {
+      // Restore saved coverage type radio state
+      document.querySelectorAll('#s9-coverage-type-options .radio-option').forEach(opt => {
+        const match = opt.dataset.value === formData.psychiatryCoverageType;
+        opt.classList.toggle('selected', match);
+        opt.querySelector('input').checked = match;
+      });
+      // Apply dates/days visibility based on current coverage type
+      applyPsychCoverageType();
+      // Initialise calendar if not yet done
+      renderCalendar();
+    } else {
+      // Clinician / Nursing: always show days, hide dates
+      document.getElementById('s9-dates-block').style.display = 'none';
+      document.getElementById('s9-days-block').style.display  = 'block';
+    }
 
     // Leadership shift note
     document.getElementById('leadershipShiftNote').style.display = isLeadership ? 'block' : 'none';
@@ -2232,27 +2380,61 @@
     updateHoursDisplay();
   }
 
-  // Shows the appropriate hours entry block based on service type
+  // Show/hide dates vs days blocks based on psychiatryCoverageType
+  function applyPsychCoverageType() {
+    const ct = formData.psychiatryCoverageType;
+    document.getElementById('s9-dates-block').style.display = ct === 'Short-term' ? 'block' : 'none';
+    document.getElementById('s9-days-block').style.display  = ct === 'Ongoing'    ? 'block' : 'none';
+    updateHoursDisplay();
+  }
+
+  const SHIFT_BASED_VALUES = [
+    'AM shift (7 AM to 3:30 PM)',
+    'PM shift (3 PM to 11:30 PM)',
+    'Night shift (11 PM to 7:30 AM)',
+  ];
+
   function updateHoursDisplay() {
-    const isPsych      = formData.serviceType === 'Psychiatry';
-    const autoBlock    = document.getElementById('s9-hours-auto-block');
-    const manualBlock  = document.getElementById('s9-hours-manual-block');
-    const noteEl       = document.getElementById('hoursGuidanceNote');
-    const labelEl      = document.getElementById('hoursManualLabel');
+    const isPsych     = formData.serviceType === 'Psychiatry';
+    const autoBlock   = document.getElementById('s9-hours-auto-block');
+    const manualBlock = document.getElementById('s9-hours-manual-block');
+    const noteEl      = document.getElementById('hoursGuidanceNote');
+    const labelEl     = document.getElementById('hoursManualLabel');
+    const isShift     = SHIFT_BASED_VALUES.includes(formData.shift);
 
-    // Auto-calc block is never used — always show manual entry
-    autoBlock.style.display   = 'none';
-
-    manualBlock.style.display = 'block';
-    if (isPsych) {
-      labelEl.innerHTML = 'How many hours do you need? <span style="font-weight:400;color:#718096;">(optional)</span>';
-      noteEl.style.display = 'none';
-      return;
+    if (isPsych && isShift) {
+      // Auto-calc: dates × 8 (Short-term) or days × 8 (Ongoing)
+      let count = 0;
+      let unit  = 'date';
+      if (formData.psychiatryCoverageType === 'Short-term') {
+        count = Array.isArray(formData.psychiatryDates) ? formData.psychiatryDates.length : 0;
+        unit  = 'date';
+      } else if (formData.psychiatryCoverageType === 'Ongoing') {
+        count = formData.coverageDays.filter(d => d !== 'Flexible').length;
+        unit  = 'day';
+      }
+      if (count > 0) {
+        const total = count * 8;
+        formData.hoursPerWeek = String(total);
+        document.getElementById('hoursAutoDisplay').textContent =
+          `${count} ${unit}${count !== 1 ? 's' : ''} \u00d7 8 hours = ${total} hours`;
+        autoBlock.style.display   = 'block';
+        manualBlock.style.display = 'none';
+        noteEl.style.display      = 'none';
+        return;
+      }
     }
 
-    // Clinician / Nursing: manual entry, always shown
-    if (labelEl) labelEl.innerHTML = 'How many hours per week do you need this service?<span class="required-asterisk">*</span>';
-    noteEl.style.display = formData.serviceType ? 'block' : 'none';
+    // Manual entry — for Clinician/Nursing always; for Psychiatry when not shift-based or no count yet
+    autoBlock.style.display   = 'none';
+    manualBlock.style.display = 'block';
+    if (isPsych) {
+      if (labelEl) labelEl.innerHTML = 'How many hours do you need? <span style="font-weight:400;color:#718096;">(optional)</span>';
+      noteEl.style.display = 'none';
+    } else {
+      if (labelEl) labelEl.innerHTML = 'How many hours per week do you need this service?<span class="required-asterisk">*</span>';
+      noteEl.style.display = formData.serviceType ? 'block' : 'none';
+    }
   }
 
   // Days of week — Flexible is mutually exclusive with specific days
@@ -2312,9 +2494,109 @@
     updateHoursDisplay();
   });
 
-  document.getElementById('psychiatryDates').addEventListener('input', e => {
-    formData.psychiatryDates = e.target.value;
+  // Coverage type (Psychiatry only)
+  initRadioGroup('s9-coverage-type-options', 'psychiatryCoverageType', () => {
+    showError('coverage-type-error', false);
+    applyPsychCoverageType();
   });
+
+  // ── Calendar (Psychiatry short-term date picker) ──────────
+  (function() {
+    const MONTHS = ['January','February','March','April','May','June',
+                    'July','August','September','October','November','December'];
+    const DAY_HDRS = ['Su','Mo','Tu','We','Th','Fr','Sa'];
+    let viewYear, viewMonth;
+
+    function initViewDate() {
+      const now = new Date();
+      viewYear  = now.getFullYear();
+      viewMonth = now.getMonth();
+    }
+
+    function toKey(y, m, d) {
+      return `${y}-${String(m+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+    }
+
+    function formatKey(key) {
+      const [y, m, d] = key.split('-').map(Number);
+      return `${MONTHS[m-1]} ${d}, ${y}`;
+    }
+
+    window.renderCalendar = function() {
+      if (viewYear === undefined) initViewDate();
+      document.getElementById('cal-month-label').textContent = `${MONTHS[viewMonth]} ${viewYear}`;
+      const grid = document.getElementById('cal-grid');
+      grid.innerHTML = '';
+      // Day headers
+      DAY_HDRS.forEach(h => {
+        const el = document.createElement('div');
+        el.className = 'cal-day-hdr';
+        el.textContent = h;
+        grid.appendChild(el);
+      });
+      // First weekday of month
+      const firstDay = new Date(viewYear, viewMonth, 1).getDay();
+      for (let i = 0; i < firstDay; i++) {
+        const el = document.createElement('div');
+        el.className = 'cal-day cal-empty';
+        grid.appendChild(el);
+      }
+      // Days in month
+      const daysInMonth = new Date(viewYear, viewMonth + 1, 0).getDate();
+      const selected = new Set(formData.psychiatryDates);
+      for (let d = 1; d <= daysInMonth; d++) {
+        const key = toKey(viewYear, viewMonth, d);
+        const el  = document.createElement('div');
+        el.className = 'cal-day' + (selected.has(key) ? ' cal-selected' : '');
+        el.textContent = d;
+        el.addEventListener('click', () => {
+          const idx = formData.psychiatryDates.indexOf(key);
+          if (idx === -1) formData.psychiatryDates.push(key);
+          else            formData.psychiatryDates.splice(idx, 1);
+          // Keep sorted
+          formData.psychiatryDates.sort();
+          if (formData.psychiatryDates.length > 0) showError('psychiatryDates-error', false);
+          renderCalendar();
+          renderChips();
+          updateHoursDisplay();
+        });
+        grid.appendChild(el);
+      }
+    };
+
+    function renderChips() {
+      const container = document.getElementById('selected-dates-chips');
+      if (!formData.psychiatryDates.length) {
+        container.innerHTML = '<span class="date-chip-none">No dates selected — click a date above to add it</span>';
+        return;
+      }
+      container.innerHTML = formData.psychiatryDates.map(key =>
+        `<span class="date-chip" data-key="${key}">${formatKey(key)} ×</span>`
+      ).join('');
+      container.querySelectorAll('.date-chip').forEach(chip => {
+        chip.addEventListener('click', () => {
+          const k = chip.dataset.key;
+          formData.psychiatryDates = formData.psychiatryDates.filter(x => x !== k);
+          renderCalendar();
+          renderChips();
+          updateHoursDisplay();
+        });
+      });
+    }
+
+    document.getElementById('cal-prev').addEventListener('click', () => {
+      if (viewMonth === 0) { viewMonth = 11; viewYear--; }
+      else viewMonth--;
+      renderCalendar();
+    });
+    document.getElementById('cal-next').addEventListener('click', () => {
+      if (viewMonth === 11) { viewMonth = 0; viewYear++; }
+      else viewMonth++;
+      renderCalendar();
+    });
+
+    initViewDate();
+  })();
 
   document.getElementById('hoursPerWeek').addEventListener('input', e => {
     formData.hoursPerWeek = e.target.value;
@@ -2456,9 +2738,10 @@ REASON FOR REQUEST
 TIMING
   Start date:        ${fmt(d.startDate)}
   Priority:          ${fmt(d.priority)}
-  Coverage days:     ${fmtArr(d.coverageDays)}${d.psychiatryDates ? '\n  Exact dates: ' + d.psychiatryDates : ''}
+  Coverage type:     ${d.psychiatryCoverageType ? fmt(d.psychiatryCoverageType) + ' coverage' : fmtArr(d.coverageDays)}
+  Exact dates:       ${Array.isArray(d.psychiatryDates) && d.psychiatryDates.length ? d.psychiatryDates.map(k => { const [y,m,day]=k.split('-').map(Number); return ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'][m-1]+' '+day+', '+y; }).join(', ') : '—'}
   Coverage time:     ${fmt(d.shift)}
-  Hours per week:    ${fmt(d.hoursPerWeek)}
+  Hours:             ${fmt(d.hoursPerWeek)}
 
 PROGRAM
   Name:              ${fmt(d.programName)}
@@ -2567,12 +2850,21 @@ Questions? Reply to this email or contact your telehealth coordinator directly.
     document.getElementById('cs-priority').textContent = fmt(d.priority);
     document.getElementById('cs-start').textContent    = fmt(d.startDate);
 
-    // Coverage: Psychiatry shows dates, others show days + shift + hours
+    // Coverage row
+    const MONTHS_SHORT = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+    const fmtCalDate = k => { const [y,m,day] = k.split('-').map(Number); return `${MONTHS_SHORT[m-1]} ${day}`; };
     let coverageText;
     if (d.serviceType === 'Psychiatry') {
-      coverageText = d.psychiatryDates
-        ? `${d.psychiatryDates} · ${fmt(d.hoursPerWeek) || '—'} hrs`
-        : `${fmt(d.shift)} · ${fmt(d.hoursPerWeek) || '—'} hrs`;
+      const shiftPart = fmt(d.shift);
+      const hrsPart   = fmt(d.hoursPerWeek) !== '—' ? `${fmt(d.hoursPerWeek)} hrs` : '';
+      if (d.psychiatryCoverageType === 'Short-term') {
+        const datesStr = Array.isArray(d.psychiatryDates) && d.psychiatryDates.length
+          ? d.psychiatryDates.map(fmtCalDate).join(', ')
+          : '—';
+        coverageText = [datesStr, shiftPart, hrsPart].filter(Boolean).join(' · ');
+      } else {
+        coverageText = [fmtArr(d.coverageDays), shiftPart, hrsPart].filter(s => s && s !== '—').join(' · ') || '—';
+      }
     } else {
       coverageText = `${fmtArr(d.coverageDays)} · ${fmt(d.shift)} · ${fmt(d.hoursPerWeek)} hrs/wk`;
     }
@@ -2616,7 +2908,9 @@ Questions? Reply to this email or contact your telehealth coordinator directly.
     formData.programName = formData.programNumber = formData.programState = '';
     formData.programCounty = formData.primaryName = formData.primaryEmail = '';
     formData.primaryPhone = formData.coordinatorName = formData.coordinatorEmail = '';
-    formData.coordinatorPhone = formData.psychiatryDates = formData.hoursPerWeek = '';
+    formData.coordinatorPhone = formData.hoursPerWeek = '';
+    formData.psychiatryDates = [];
+    formData.psychiatryCoverageType = null;
     formData.startDate = '';
     formData.psychiatryLicenseType = 'PMHNP';
     formData.mdReason = '';
@@ -2644,6 +2938,7 @@ Questions? Reply to this email or contact your telehealth coordinator directly.
     // Confirmation: hide specific services row
     document.getElementById('cs-services-detail-row').style.display = 'none';
     // Section 9 blocks — reset to default hidden state
+    document.getElementById('s9-coverage-type-block').style.display = 'none';
     const datesBlock = document.getElementById('s9-dates-block');
     const daysBlock  = document.getElementById('s9-days-block');
     const autoBlock  = document.getElementById('s9-hours-auto-block');
@@ -2656,6 +2951,10 @@ Questions? Reply to this email or contact your telehealth coordinator directly.
     if (hoursNote)   hoursNote.style.display   = 'none';
     const autoDisplay = document.getElementById('hoursAutoDisplay');
     if (autoDisplay) autoDisplay.textContent = '—';
+    // Reset calendar
+    const chipsEl = document.getElementById('selected-dates-chips');
+    if (chipsEl) chipsEl.innerHTML = '<span class="date-chip-none">No dates selected — click a date above to add it</span>';
+    if (typeof renderCalendar === 'function') renderCalendar();
 
     // Reset EHR checkboxes (rebuilt fresh next time section 10 is entered)
     document.getElementById('ehr-primary-options').innerHTML = '';
